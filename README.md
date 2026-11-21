@@ -29,7 +29,14 @@ It does not fetch records. The workflow starts when the fax arrives.
 | `data/intake_form.md` | Intake form filled in by the patient's daughter |
 | `eval/answer_key.md` | The 7 planted findings, 4 traps, and how to score a run. **Never pass this to the model.** |
 | `prompts/brief_prompt.md` | Draft system prompt and output format |
-| `scripts/generate_brief.py` | Starter script: one model call that returns the brief and flags as JSON. Untested. |
+| `app/server.py` | Demo server: serves the page, the brief, and records pharmacist checks and physician decisions |
+| `app/covigil/pipeline.py` | The model call and the audit call. Untested against the live API. |
+| `app/covigil/schema.py` | Checks on the model's output: sources present, six flags at most, no orders |
+| `app/static/index.html` | The one screen: brief, flags, pharmacist and physician views |
+| `fixtures/sample_brief.json` | Hand-written sample so the page works without a key. Not model output. |
+| `eval/score.py`, `eval/answer_key.json` | Scores a brief against the planted findings and traps |
+| `tests/` | Ten tests for validation, scoring and the decision rules |
+| `docs/ENG_PLAN.md` | Engineering plan, following gstack's plan-eng-review structure |
 | `scripts/make_synthetic_patient.py` | Regenerates the fax packet and fill history |
 | `docs/clara_interview_notes.md` | Notes from the interview with Clara |
 | `docs/brainstorm_notes.md` | Team brainstorm notes, with corrections |
@@ -41,9 +48,20 @@ Idea scorecard (12 ideas scored on the rubric, with persona reactions): https://
 
 ```
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=...        # keep the key out of the repo
-python scripts/generate_brief.py > out.json
+pytest                                  # 10 tests, no API key needed
+uvicorn app.server:app --port 8000      # then open http://localhost:8000
 ```
+
+The page opens with a hand-written sample brief (red badge) so the interface works without a key. To run the model:
+
+```
+export ANTHROPIC_API_KEY=...            # keep the key out of the repo
+# press "Run on the records" in the page, or:
+python -m app.covigil.pipeline
+python eval/score.py out/brief.json     # findings caught, traps flagged
+```
+
+The model call and the audit call have not been run yet. See `docs/ENG_PLAN.md` for the plan, the failure modes and the order of work.
 
 ## The demo patient
 

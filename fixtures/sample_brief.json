@@ -1,0 +1,40 @@
+{
+  "_note": "Hand-written fixture so the interface works before the model call does. NOT model output. Synthetic patient.",
+  "notice": "Software-generated draft for clinician review. Not a diagnosis.",
+  "patient": {"name": "Hector M. Reyes", "age": 68, "reason_for_visit": "New patient. Fall and dizziness on standing."},
+  "story": [
+    {"text": "Moved from Ohio in October to live with his daughter. No local primary care physician until now.", "sources": ["intake: why are you coming in", "fax p.10"]},
+    {"text": "Fall at night on 12 Nov after lightheadedness on standing. Orthostatics: 132/78 lying, 98/58 standing.", "sources": ["fax p.9"]},
+    {"text": "Type 2 diabetes, hypertension, chronic kidney disease, persistent atrial fibrillation, benign prostatic hyperplasia, knee osteoarthritis.", "sources": ["fax p.3"]},
+    {"text": "Admitted 18 to 21 Aug for volume overload. Lisinopril was changed to losartan and hydrochlorothiazide to furosemide.", "sources": ["fax p.5", "fax p.6"]},
+    {"text": "eGFR 52, then 44, then 36 over five months. Potassium 5.4 on 12 Nov.", "sources": ["fax p.3", "fax p.6", "fax p.10"]}
+  ],
+  "medications_actually_taking": [
+    {"drug": "metformin", "dose": "1000 mg twice daily", "status": "taking", "evidence": "Filled monthly through 6 Nov; on intake form.", "sources": ["fills: metformin 2026-11-06", "intake: medicines"]},
+    {"drug": "lisinopril", "dose": "20 mg daily", "status": "taking", "evidence": "Discontinued 21 Aug but still filled monthly and listed on the intake form.", "sources": ["fax p.6", "fills: lisinopril 2026-11-06", "intake: medicines"]},
+    {"drug": "losartan", "dose": "50 mg daily", "status": "taking", "evidence": "Started 21 Aug; filled monthly.", "sources": ["fax p.6", "fills: losartan 2026-11-17"]},
+    {"drug": "furosemide", "dose": "40 mg every morning", "status": "taking", "evidence": "Started 21 Aug; filled monthly.", "sources": ["fax p.6", "fills: furosemide 2026-11-17"]},
+    {"drug": "tamsulosin", "dose": "0.4 mg at bedtime", "status": "taking", "evidence": "Started 2 Oct.", "sources": ["fax p.8", "fills: tamsulosin 2026-11-01"]},
+    {"drug": "atorvastatin", "dose": "40 mg nightly", "status": "taking", "evidence": "90-day fills on 12 Jun and 9 Sep.", "sources": ["fills: atorvastatin 2026-09-09"]},
+    {"drug": "apixaban", "dose": "5 mg twice daily", "status": "probably_not_taking", "evidence": "Last fill 14 Jul for 30 days; no bottle at home.", "sources": ["fills: apixaban 2026-07-14", "intake: medicines"]},
+    {"drug": "naproxen (over the counter)", "dose": "440 mg twice daily most days", "status": "taking", "evidence": "Reported on the intake form only.", "sources": ["intake: over-the-counter medicines"]}
+  ],
+  "medication_issues": [
+    {"id": "flag-1", "title": "Apixaban probably lapsed since mid-August", "why_review": "Last fill 14 Jul for 30 days. The emergency record lists it as current. No bottle at home. Persistent atrial fibrillation.", "when": "before_visit", "sources": ["fills: apixaban 2026-07-14", "fax p.9", "intake: medicines"]},
+    {"id": "flag-2", "title": "Lisinopril and losartan both being taken", "why_review": "Lisinopril was discontinued on 21 Aug when losartan was started. Both are still filled monthly. Potassium 5.4, creatinine 1.9.", "when": "before_visit", "sources": ["fax p.6", "fills: lisinopril 2026-11-06", "fax p.10"]},
+    {"id": "flag-3", "title": "Daily over-the-counter naproxen with a diuretic and kidney disease", "why_review": "Naproxen most days since September. His prior physician advised against it. eGFR has fallen from 44 to 36 since.", "when": "before_visit", "sources": ["intake: over-the-counter medicines", "fax p.3", "fax p.10"]},
+    {"id": "flag-4", "title": "Medicines that may contribute to dizziness on standing", "why_review": "Tamsulosin started 2 Oct and furosemide 21 Aug, on top of two blood pressure agents. The emergency physician asked for a medication review.", "when": "at_visit", "sources": ["fax p.8", "fax p.6", "fax p.10"]},
+    {"id": "flag-5", "title": "Metformin 2,000 mg a day with eGFR 36", "why_review": "The dose was set when eGFR was 52.", "when": "at_visit", "sources": ["fills: metformin 2026-11-06", "fax p.3", "fax p.10"]}
+  ],
+  "allergies": {"text": "Conflict: prior records list penicillin (hives). The emergency record and the family report no allergies.", "sources": ["fax p.3", "fax p.9", "intake: allergies"]},
+  "tests_already_done": [
+    {"test": "CT head without contrast", "date": "2026-11-12", "result": "No acute bleed or fracture.", "sources": ["fax p.10"]},
+    {"test": "Left hip and pelvis X-ray", "date": "2026-11-12", "result": "No fracture.", "sources": ["fax p.10"]},
+    {"test": "Echocardiogram", "date": "2026-08-19", "result": "LVEF 55%, mild left ventricular hypertrophy.", "sources": ["fax p.5"]}
+  ],
+  "open_items_from_other_clinicians": [
+    {"text": "Emergency physician asked for a repeat basic metabolic panel within one week.", "sources": ["fax p.10"]},
+    {"text": "Post-discharge primary care visit in August was never scheduled.", "sources": ["fax p.6"]}
+  ],
+  "not_found": ["No record of why apixaban stopped.", "No kidney function result between 21 Aug and 12 Nov."]
+}
