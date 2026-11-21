@@ -399,6 +399,11 @@ def index() -> FileResponse:
     return FileResponse(ROOT / "app" / "static" / "index.html")
 
 
+@app.get("/flags")
+def flags_page() -> FileResponse:
+    return FileResponse(ROOT / "app" / "static" / "flags.html")
+
+
 @app.get("/patient")
 def patient_page() -> FileResponse:
     page = ROOT / "app" / "static" / "patient.html"

@@ -1,0 +1,17 @@
+modules = ["python-3.12"]
+run = "uvicorn app.server:app --host 0.0.0.0 --port ${PORT:-8000}"
+onBoot = "pip install -r requirements.txt"
+
+[env]
+COVIGIL_MODEL = "claude-opus-5-5"
+
+[[ports]]
+localPort = 8000
+externalPort = 80
+
+# Reserved VM: one always-on instance, so out/state.json (decisions, pharmacist checks)
+# survives between requests. Autoscale can start several instances that do not share files.
+[deployment]
+deploymentTarget = "gce"
+build = ["pip", "install", "-r", "requirements.txt"]
+run = ["sh", "-c", "uvicorn app.server:app --host 0.0.0.0 --port ${PORT:-8000}"]
