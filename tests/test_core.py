@@ -70,7 +70,7 @@ def test_dismissal_needs_a_reason(tmp_path, monkeypatch):
     monkeypatch.setattr(server, "OUT", tmp_path)
     monkeypatch.setattr(server, "STATE", tmp_path / "state.json")
     client = TestClient(server.app)
-    assert client.get("/api/brief").json()["brief"]["origin"] == "fixture"
+    assert client.get("/api/brief").json()["brief"]["origin"] == "sample"
     assert client.post("/api/decision", json={"flag_id": "flag-1", "action": "dismiss"}).status_code == 422
     ok = client.post("/api/decision", json={"flag_id": "flag-1", "action": "dismiss", "reason": "Discussed with cardiology"})
     assert ok.status_code == 200 and ok.json()["decisions"]["flag-1"]["by"] == "Clara"
