@@ -1,4 +1,4 @@
-# Pre-visit brief with a medication safety check
+# CoVigil: pre-visit brief with a medication safety check
 
 Claude Impact Lab, Digital Health, 21 November 2026. General Medicine track.
 
