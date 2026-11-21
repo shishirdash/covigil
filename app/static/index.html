@@ -5,175 +5,231 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CoVigil</title>
 <style>
-:root{--bg:#eef0f3;--card:#fcfcfb;--ink:#151a22;--muted:#586173;--line:#d3d8e0;--accent:#1f3fbf;--soft:#e3e8fb;--review:#ec835a;--ok:#2f7d57;--risk:#b4541f;
-  --live:#17703f;--saved:#1f3fbf;--sample:#b3261e;--warn:#8a5a00;--warnbg:#fff4d6}
+/* Design rule: the page is about the patient and what the clinician must decide.
+   How the software made it is one click away ("How this brief was made"), never in the way. */
+:root{--bg:#f3f1ec;--card:#fffdf9;--ink:#1b1f26;--muted:#5b6472;--line:#ddd8cd;--accent:#1f4fbf;--soft:#e7edfb;
+  --now:#b5471b;--nowbg:#fdf0e8;--later:#3b5b8c;--ok:#22704a;--okbg:#e8f4ed;--risk:#b4541f;--sample:#a3241d;--samplebg:#fdecea;--warnbg:#fff4d6;--live:#22704a}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{background:var(--card);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;position:sticky;top:0;z-index:2}
-header b{font-size:18px}
-.notice{font-size:13px;color:var(--muted);flex:1;min-width:220px}
-.badge{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:5px;padding:2px 8px}
-.badge.fx{border-color:var(--risk);color:var(--risk)}.badge.md{border-color:var(--ok);color:var(--ok)}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
-.seg button{border:0;background:var(--card);padding:6px 12px;font:inherit;cursor:pointer;color:var(--ink)}
-.seg button[aria-pressed=true]{background:var(--accent);color:#fff}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;position:sticky;top:0;z-index:2}
+header b{font-size:19px}
+header .sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);padding:7px 13px;font:inherit;font-size:15px;cursor:pointer;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
 .seg button:disabled{color:var(--muted);cursor:not-allowed}
-button.act,a.act{font:inherit;font-size:13px;padding:5px 11px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
+.viewing{font-size:14px;color:var(--muted)}
+button.act,a.act{font:inherit;font-size:15px;padding:7px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
 button.act:hover,a.act:hover{border-color:var(--accent);color:var(--accent)}
 button.act:disabled{opacity:.55;cursor:not-allowed}
 button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
-button.primary:hover{background:#18329a;color:#fff}
-button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-main{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:18px 20px;max-width:1280px;margin:0 auto}
-@media (max-width:900px){main{grid-template-columns:1fr}}
-section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:12px}
-h2{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-h3{margin:8px 0 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.pt{font:500 24px/1.15 Georgia,serif}
-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.src{font:11px ui-monospace,Menlo,monospace;color:var(--accent);border:1px solid var(--line);border-radius:4px;padding:1px 5px;white-space:nowrap;margin-left:4px;text-decoration:none;display:inline-block}
-a.src:hover{border-color:var(--accent)}
-table{border-collapse:collapse;width:100%;font-size:14px}
-td,th{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
-.st{font:11px ui-monospace,Menlo,monospace;border-radius:4px;padding:1px 6px;border:1px solid var(--line);white-space:nowrap}
-.st.probably_not_taking,.st.unclear{border-color:var(--risk);color:var(--risk)}
-.flag{border:1px solid var(--line);border-left:4px solid var(--review);border-radius:7px;padding:12px;display:flex;flex-direction:column;gap:7px}
-.flag.accept{border-left-color:var(--ok)}.flag.dismiss{border-left-color:var(--line);opacity:.6}
-.when{font:11px ui-monospace,Menlo,monospace;color:var(--muted)}
-.stamp{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:5px;padding:3px 8px;align-self:flex-start}
-.stamp.verified{border-color:var(--ok);color:var(--ok)}.stamp.unresolved,.stamp.none{border-color:var(--risk);color:var(--risk)}
+button.primary:hover{background:#173d99;color:#fff}
+button.yes{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:600}
+button.yes:hover{background:#185337;color:#fff}
+button.link{border:0;background:none;color:var(--accent);font:inherit;font-size:14px;cursor:pointer;padding:0;text-decoration:underline}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{max-width:900px;margin:0 auto;padding:22px 20px 60px;display:flex;flex-direction:column;gap:26px}
+h1{font:500 clamp(28px,4.5vw,38px)/1.12 Georgia,"Times New Roman",serif;margin:0;text-wrap:balance}
+h2{font:500 24px/1.2 Georgia,"Times New Roman",serif;margin:0}
+h3{margin:0;font-size:16px;font-weight:650}
+p{margin:0}
+.sub{color:var(--muted);font-size:16px}
+.hero{display:flex;flex-direction:column;gap:10px}
+.visit{font-size:19px}
+/* one provenance line for the whole brief, instead of a badge on every line */
+.prov{border-radius:10px;padding:11px 14px;font-size:15.5px;border:1px solid var(--line);background:var(--card)}
+.prov b{font-weight:650}
+.prov.sample{background:var(--samplebg);border-color:#e9a39d;color:#5d130f}
+.prov.live{background:var(--okbg);border-color:#a9d3bb;color:#0f3d26}
+.nudge{font-size:15.5px;color:var(--muted)}
+.nudge a{color:var(--accent)}
+.banner{border-radius:10px;padding:12px 14px;font-size:16px;border:2px solid}
+.banner b{display:block;font-size:18px;margin-bottom:2px}
+.banner.bad{background:var(--samplebg);border-color:var(--sample);color:#5d130f}
+.banner.good{background:var(--okbg);border-color:var(--live);color:#0f3d26}
+.warnstrip{background:var(--warnbg);border:1px solid #e6c56a;color:#4a3200;border-radius:10px;padding:10px 14px;font-size:15.5px}
+.sec{display:flex;flex-direction:column;gap:12px}
+.progress{font-size:15.5px;color:var(--muted)}
+.group{font:650 14px/1.2 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
+.group.now{color:var(--now)}.group.later{color:var(--later)}
+.flag{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--now);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.flag.later{border-left-color:var(--later)}
+.flag.accept{border-left-color:var(--ok)}
+.flag.dismiss{border-left-color:var(--line)}
+.flag .title{font-size:20px;font-weight:650;line-height:1.3}
+.flag.done{padding:11px 18px;gap:4px}.flag.done .title{font-size:17px}
+.flag.dismiss .title{color:var(--muted);text-decoration:line-through}
+.why{font-size:17px}
+.from{font-size:14.5px;color:var(--muted)}
+.pharm{font-size:15px;color:var(--muted)}
+.pharm.verified{color:var(--ok)}.pharm.unresolved{color:var(--risk)}
+.outcome{font-size:15.5px}
+.outcome.accept{color:var(--ok);font-weight:600}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-input[type=text],textarea{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--card);color:var(--ink);flex:1;min-width:180px}
-.logline{font-size:13px;color:var(--muted)}
-.err{color:var(--risk);font-size:13px}
-#log li{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
-.wide{grid-column:1/-1}
-
-/* origin badges: solid fills so they read on a projector */
-.og{display:inline-block;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.03em;border-radius:4px;padding:2px 7px;margin-right:6px;vertical-align:1px;white-space:nowrap;color:#fff}
-.og.live{background:var(--live)}.og.saved{background:var(--saved)}.og.sample{background:var(--sample)}
-.og.big{font-size:13px;padding:4px 10px}
-
-/* banners and checks */
-.banner{border-radius:8px;padding:12px 14px;font-size:15px;border:2px solid}
-.banner b{display:block;font-size:17px;margin-bottom:2px}
-.banner.bad{background:#fdecea;border-color:var(--sample);color:#6d1410}
-.banner.good{background:#e7f5ec;border-color:var(--live);color:#0d4527}
-.banner.info{background:var(--soft);border-color:var(--saved);color:#13286e}
-.checks li{font-size:14px}
-.warnitem{background:var(--warnbg);border:1px solid #e6c56a;color:#4a3200;border-radius:6px;padding:6px 10px}
-.okitem{color:var(--ok);font-size:14px}
-.code{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
-.mark{display:inline-block;font:700 11px/1.3 system-ui,sans-serif;border-radius:4px;padding:1px 6px;margin-left:6px;background:var(--warnbg);color:#4a3200;border:1px solid #e6c56a;white-space:nowrap}
-.mark.audit{background:#fdecea;color:#6d1410;border-color:#e9a39d}
+input[type=text],textarea{font:inherit;font-size:16px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink);flex:1;min-width:200px}
+/* sources: plain words, not codes */
+.src{font-size:13.5px;color:var(--accent);background:var(--soft);border-radius:999px;padding:2px 10px;white-space:nowrap;margin:0 5px 3px 0;text-decoration:none;display:inline-block}
+a.src:hover{text-decoration:underline}
+span.src{color:#3a4660;background:#eceae4}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+ul.plain li{padding-left:16px;position:relative}
+ul.plain li::before{content:"";position:absolute;left:0;top:.68em;width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+table{border-collapse:collapse;width:100%;font-size:16px}
+td{padding:9px 8px 9px 0;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+tr:last-child td{border-bottom:0}
+td.med{font-weight:600;width:30%}
+.st{font-size:13.5px;font-weight:650;border-radius:999px;padding:2px 10px;white-space:nowrap;background:var(--okbg);color:var(--ok)}
+.st.probably_not_taking,.st.unclear{background:var(--nowbg);color:var(--now)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.two{grid-template-columns:1fr}td.med{width:auto}}
+.mark{display:inline-block;font:650 12.5px/1.3 system-ui,sans-serif;border-radius:4px;padding:1px 7px;margin-left:6px;background:var(--warnbg);color:#4a3200;border:1px solid #e6c56a;white-space:nowrap}
+.mark.audit{background:var(--samplebg);color:#5d130f;border-color:#e9a39d}
 .hasprob{outline:2px dashed #d9a520;outline-offset:3px;border-radius:4px}
-tr.hasprob{outline-offset:-2px}
-
-/* inputs */
-.inputs li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
-.inputs a{color:var(--accent);font-weight:600}
-.kind{font:11px ui-monospace,Menlo,monospace;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px}
-.inv{font:700 11px/1.3 system-ui,sans-serif;border:1px dashed var(--muted);color:var(--muted);border-radius:4px;padding:1px 6px}
-.appr{font:700 12px/1.3 system-ui,sans-serif;border-radius:4px;padding:2px 8px;color:#fff}
-.appr.yes{background:var(--live)}.appr.no{background:#6b7280}
-
+.logline{font-size:14.5px;color:var(--muted)}
+.err{color:var(--risk);font-size:14px}
 /* live run */
 .liveTop{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
-.timer{font:700 44px/1 ui-monospace,Menlo,monospace;letter-spacing:-.02em;min-width:5.5ch}
-.timer small{font-size:20px;color:var(--muted);font-weight:500}
-.bar{flex:1;min-width:200px;height:14px;background:#dfe3ea;border-radius:7px;overflow:hidden}
+.timer{font:700 40px/1 ui-monospace,Menlo,monospace;letter-spacing:-.02em;min-width:5.5ch}
+.timer small{font-size:18px;color:var(--muted);font-weight:500}
+.bar{flex:1;min-width:200px;height:12px;background:#e3dfd6;border-radius:6px;overflow:hidden}
 .bar>div{height:100%;width:0;background:var(--live);transition:width .2s linear}
 .bar.late>div{background:var(--risk)}
-.livestatus{font-size:15px;font-weight:600}
-.liveMeta{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
-pre.stream{margin:0;background:#10141b;color:#d7f7df;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;border-radius:8px;padding:12px;height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word}
-pre.stream:empty::before{content:"(nothing written by the model yet)";color:#7d8796}
-.raw{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
-.raw a{font:12px ui-monospace,Menlo,monospace;color:var(--accent);border:1px solid var(--line);border-radius:5px;padding:2px 8px;text-decoration:none}
-.raw a:hover{border-color:var(--accent)}
+.livestatus{font-size:18px;font-weight:600}
+.liveMeta{font:12.5px ui-monospace,Menlo,monospace;color:var(--muted)}
+pre.stream{margin:8px 0 0;background:#10141b;color:#d7f7df;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;border-radius:8px;padding:12px;height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+pre.stream:empty::before{content:"(nothing written yet)";color:#7d8796}
+/* behind the scenes */
+details.how{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 18px}
+details.how>summary{cursor:pointer;padding:12px 0;font-size:17px;font-weight:650}
+details.how>summary span{font-weight:400;color:var(--muted);font-size:15px}
+details.how .inner{display:flex;flex-direction:column;gap:18px;padding:4px 0 16px;font-size:15.5px}
+details.how h3{font-size:15px}
+.inputs li{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.inputs a{color:var(--accent);font-weight:600}
+.inv{font:650 12px/1.3 system-ui,sans-serif;border:1px dashed var(--muted);color:var(--muted);border-radius:4px;padding:1px 6px}
+.appr{font:650 12.5px/1.3 system-ui,sans-serif;border-radius:4px;padding:2px 8px;color:#fff}
+.appr.yes{background:var(--live)}.appr.no{background:#6b7280}
+.okitem{color:var(--ok)}
+.warnitem{background:var(--warnbg);border:1px solid #e6c56a;color:#4a3200;border-radius:6px;padding:6px 10px}
+.code{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+.raw{display:flex;flex-wrap:wrap;gap:8px}
+.raw a{font-size:14px;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:3px 10px;text-decoration:none}
+#log li{font-size:14px;color:var(--muted)}
+footer{font-size:14px;color:var(--muted);text-align:center}
 </style>
 </head>
 <body>
 <header>
   <b>CoVigil</b>
-  <span class="notice" id="notice"></span>
-  <span id="origin"></span>
-  <label class="row" style="font-size:13px"><input type="checkbox" id="hasPharm" checked> Clinic has a pharmacist</label>
+  <span class="viewing">Viewing as</span>
   <div class="seg" role="group" aria-label="Viewing as">
+    <button type="button" id="rolePhys" aria-pressed="true">Physician (Clara)</button>
     <button type="button" id="rolePharm" aria-pressed="false">Pharmacist</button>
-    <button type="button" id="rolePhys" aria-pressed="true">Physician</button>
   </div>
-  <button class="act primary" type="button" id="live">Run live on the records</button>
-  <button class="act" type="button" id="aud">Check against sources</button>
-  <button class="act" type="button" id="reset">Reset reviews</button>
-  <a class="act" href="/patient" id="patientLink">Patient screen</a>
+  <span class="sp"></span>
   <span class="err" id="err" role="alert"></span>
+  <button class="act primary" type="button" id="live">Run live on the records</button>
 </header>
 <main>
-  <div class="wide" id="bannerBox" hidden></div>
+  <div class="hero">
+    <p class="sub" id="visitLine">Before your next visit</p>
+    <h1 id="pt"></h1>
+    <p class="visit" id="reason"></p>
+    <div class="prov" id="prov"></div>
+    <p class="nudge" id="nudge" hidden></p>
+  </div>
 
-  <section class="wide" id="liveBox" hidden aria-live="polite">
-    <h2>Live run: what the model is writing</h2>
+  <div id="bannerBox" hidden></div>
+
+  <div class="card" id="liveBox" hidden aria-live="polite">
     <div class="liveTop">
       <div class="timer" id="timer" aria-label="Elapsed seconds">0.0<small> s</small></div>
       <div class="bar" id="bar"><div></div></div>
       <button class="act" type="button" id="stop" hidden>Stop and keep the last brief</button>
+      <button class="link" type="button" id="hideLive">Hide</button>
     </div>
     <div class="livestatus" id="liveStatus"></div>
-    <div class="liveMeta" id="liveMeta"></div>
-    <pre class="stream" id="stream" tabindex="0" aria-label="Raw model text as it streams"></pre>
-  </section>
+    <details id="streamWrap">
+      <summary class="logline" style="cursor:pointer">Watch what the computer is writing, word for word</summary>
+      <pre class="stream" id="stream" tabindex="0" aria-label="Raw text from the computer as it arrives"></pre>
+      <div class="liveMeta" id="liveMeta"></div>
+    </details>
+  </div>
 
-  <section>
-    <h2>Inputs: what goes to the model</h2>
-    <ul class="inputs" id="inputs"></ul>
-    <span class="logline">Every input is invented for this demo. Patient answers are sent only after a pharmacist approves them.</span>
-  </section>
-  <section class="checks">
-    <h2>Checks on this brief</h2>
-    <ul id="checks"></ul>
-    <div id="auditInline"></div>
-  </section>
+  <div class="warnstrip" id="warnTop" hidden></div>
 
-  <section>
-    <h2>The brief</h2>
-    <div class="pt" id="pt"></div>
-    <ul id="story"></ul>
-    <h3>What he is actually taking</h3>
-    <table><tbody id="meds"></tbody></table>
-    <h3>Allergies</h3><div id="allergy"></div>
-    <h3>Already done, no need to repeat</h3><ul id="tests"></ul>
-    <h3>Asked for by other clinicians</h3><ul id="open"></ul>
-    <h3>Looked for and not found</h3><ul id="nf"></ul>
-  </section>
-  <section>
-    <h2 id="flagsTitle">Medication issues to review</h2>
-    <div id="flags" style="display:flex;flex-direction:column;gap:10px"></div>
-  </section>
-  <section class="wide" id="auditBox" hidden>
-    <h2>Checked against sources by a second pass</h2>
-    <div id="audit"></div>
-  </section>
-  <section class="wide">
-    <h2>See exactly what was sent and what came back</h2>
-    <div class="raw" id="raw"></div>
-  </section>
-  <section class="wide">
-    <h2>Decision log</h2>
-    <ul id="log"></ul>
-  </section>
+  <div class="sec">
+    <h2 id="flagsTitle">Things to review</h2>
+    <p class="progress" id="progress"></p>
+    <div id="flags" style="display:flex;flex-direction:column;gap:12px"></div>
+  </div>
+
+  <div class="sec">
+    <h2>His story in one minute</h2>
+    <div class="card"><ul class="plain" id="story"></ul></div>
+  </div>
+
+  <div class="sec">
+    <h2>What he is really taking</h2>
+    <p class="sub">Worked out by comparing the records, the pharmacy history and what the family wrote.</p>
+    <div class="card"><table><tbody id="meds"></tbody></table></div>
+  </div>
+
+  <div class="two">
+    <div class="card"><h3>Allergies</h3><div id="allergy"></div></div>
+    <div class="card"><h3>Already done, no need to repeat</h3><ul class="plain" id="tests"></ul></div>
+    <div class="card"><h3>Other clinicians asked for</h3><ul class="plain" id="open"></ul></div>
+    <div class="card"><h3>Looked for, not found in the records</h3><ul class="plain" id="nf"></ul></div>
+  </div>
+
+  <details class="how" id="how">
+    <summary>How this brief was made <span>· the records it read, the checks it passed, and every decision so far</span></summary>
+    <div class="inner">
+      <div><h3>What the computer read</h3><ul class="inputs" id="inputs" style="margin-top:8px"></ul>
+        <p class="logline" style="margin-top:6px">All of it is invented for this demo. The patient's answers are included only after a pharmacist approves them.</p></div>
+      <div><h3>Automatic checks</h3><ul id="checks" style="margin-top:8px"></ul><div id="auditInline"></div></div>
+      <div id="auditBox" hidden><h3>Second look: does each line match its source?</h3><div id="audit" style="margin-top:8px"></div></div>
+      <div><h3>See exactly what was sent and what came back</h3><div class="raw" id="raw" style="margin-top:8px"></div></div>
+      <div><h3>Who decided what, and when</h3><ul id="log" style="margin-top:8px"></ul></div>
+      <div><h3>Demo controls</h3>
+        <div class="row" style="margin-top:8px">
+          <button class="act" type="button" id="aud">Run the second look</button>
+          <button class="act" type="button" id="reset">Clear all decisions</button>
+          <a class="act" href="/patient" id="patientLink">Open the patient screen</a>
+          <label class="row" style="font-size:15px"><input type="checkbox" id="hasPharm" checked> This clinic has a pharmacist</label>
+        </div></div>
+    </div>
+  </details>
+  <footer id="notice"></footer>
 </main>
 <script>
-var S={brief:null,state:{verifications:{},decisions:{},log:[]},audit:null,inputs:[],raw:{},role:"physician",hasPharm:true,running:false};
+var S={brief:null,state:{verifications:{},decisions:{},log:[]},audit:null,inputs:[],raw:{},role:"physician",hasPharm:true,running:false,asking:{},editing:{}};
 function $(id){return document.getElementById(id);}
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
-function chip(s){var m=/^fax p\.?\s*(\d+)/i.exec(s),e;
-  if(m){e=el("a","src",s);e.href="/data/outside_records_fax.pdf#page="+m[1];e.target="_blank";e.rel="noopener";e.title="Open this page of the fax";}
-  else if(/^(patient|bottle photo)\b/i.test(s)){e=el("a","src",s);e.href="/patient#staff";e.target="_blank";e.rel="noopener";e.title="Open the patient's answers and photos";}
-  else e=el("span","src",s);return e;}
-function withSrc(parent,text,sources){parent.appendChild(document.createTextNode(text+" "));(sources||[]).forEach(function(s){parent.appendChild(chip(s));});return parent;}
 function when(t){if(!t)return "";var d=new Date(t);if(isNaN(d))return String(t);return d.toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});}
+function day(t){var d=new Date(t+"T12:00:00");if(isNaN(d))return t;return d.toLocaleDateString([], {day:"numeric",month:"short"});}
+function cap(t){t=String(t||"");return t.charAt(0).toUpperCase()+t.slice(1);}
+
+/* ---------- sources in plain words ---------- */
+function srcLabel(s){var m;
+  if((m=/^fax p\.?\s*(\d+)/i.exec(s)))return "Fax, page "+m[1];
+  if((m=/^fills?:\s*(.+?)\s+(\d{4}-\d{2}-\d{2})\s*$/i.exec(s)))return "Pharmacy record: "+m[1]+", "+day(m[2]);
+  if((m=/^fills?:\s*(.+)$/i.exec(s)))return "Pharmacy record: "+m[1];
+  if((m=/^intake:\s*(.+)$/i.exec(s)))return "Intake form: "+m[1];
+  if((m=/^patient:\s*(.+)$/i.exec(s)))return "Patient's answer: "+m[1];
+  if((m=/^bottle photo:\s*(.+)$/i.exec(s)))return "Bottle photo: "+m[1];
+  return s;}
+function chip(s){var m=/^fax p\.?\s*(\d+)/i.exec(s),e,label=srcLabel(s);
+  if(m){e=el("a","src",label);e.href="/data/outside_records_fax.pdf#page="+m[1];e.title="Open this page of the fax";}
+  else if(/^(patient|bottle photo)\b/i.test(s)){e=el("a","src",label);e.href="/patient#staff";e.title="Open the patient's answers and photos";}
+  else if(/^fills?:/i.test(s)){e=el("a","src",label);e.href="/data/pharmacy_fills.csv";e.title="Open the pharmacy history";}
+  else if(/^intake:/i.test(s)){e=el("a","src",label);e.href="/data/intake_form.md";e.title="Open the intake form";}
+  else e=el("span","src",label);
+  if(e.tagName==="A"){e.target="_blank";e.rel="noopener";}
+  return e;}
+function withSrc(parent,text,sources){parent.appendChild(document.createTextNode(text+" "));(sources||[]).forEach(function(s){parent.appendChild(chip(s));});return parent;}
 async function api(path,body){
   $("err").textContent="";
   var r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:undefined);
@@ -181,31 +237,23 @@ async function api(path,body){
   if(!r.ok){var d=j.detail;if(typeof d!=="string")d=d?JSON.stringify(d):("Request failed ("+r.status+")");$("err").textContent=d;throw new Error(d);}
   return j;
 }
-
-/* ---------- origin ---------- */
 function originOf(b){var o=(b&&b.origin)||"sample";if(o==="model")return "saved";if(o==="fixture")return "sample";return o;}
-function originLabel(b){var o=originOf(b);
-  if(o==="live")return "LIVE model output";
-  if(o==="saved")return "SAVED earlier run"+(b.generated_at?" · "+when(b.generated_at):"");
-  return "HAND-WRITTEN SAMPLE — not model output";}
-function og(b,big){var o=originOf(b),s=el("span","og "+o+(big?" big":""),originLabel(b));
-  s.title=o==="live"?"Written by the model during this session":o==="saved"?"Written by the model in an earlier run"+(b.generated_at?" at "+b.generated_at:""):"Hand-written by the team so the page works without a model. Not model output.";return s;}
 
 /* ---------- checks: map "story[2] has no sources" to items ---------- */
 function problemIndex(b){var map={};(b.validation_problems||[]).forEach(function(p){
   var m=/^([a-z_]+)\[(\d+)\]/.exec(p);if(m){var k=m[1]+":"+m[2];(map[k]=map[k]||[]).push(p);}});return map;}
-var SECTION_NAMES={story:"Story line",medication_issues:"Medication issue",tests_already_done:"Test",medications_actually_taking:"Medication row",open_items_from_other_clinicians:"Open item"};
-function plainProblem(p){var m=/^([a-z_]+)\[(\d+)\]\s*(.*)$/.exec(p);if(!m)return p;
-  var what=SECTION_NAMES[m[1]]||m[1];var rest=m[3].replace(/^has no sources$/,"has no source").replace(/^reads like an order or diagnosis/,"reads like an order or diagnosis");
+var SECTION_NAMES={story:"Story line",medication_issues:"Item to review",tests_already_done:"Test",medications_actually_taking:"Medicine",open_items_from_other_clinicians:"Request"};
+function plainProblem(p){var m=/^([a-z_]+)\[(\d+)\]\s*(.*)$/.exec(p);if(!m)return cap(p);
+  var what=SECTION_NAMES[m[1]]||m[1];var rest=m[3].replace(/^has no sources$/,"does not say where it comes from").replace(/^reads like an order or diagnosis.*/,"is worded like an order or a diagnosis").replace(/^has an invalid 'when'/,"does not say when it matters");
   return what+" "+(+m[2]+1)+" "+rest;}
-function shortMark(p){if(/no sources?/.test(p))return "check: no source";if(/order|diagnosis/.test(p))return "check: order-like wording";if(/when/.test(p))return "check: bad timing";return "check failed";}
+function shortMark(p){if(/no sources?/.test(p))return "no source given";if(/order|diagnosis/.test(p))return "worded like an order";if(/when/.test(p))return "timing missing";return "check failed";}
 function norm(t){return String(t||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
 function auditHits(text){var a=S.audit;if(!a||!a.unsupported||!text)return [];var n=norm(text);if(n.length<4)return [];
   return a.unsupported.filter(function(x){var u=norm(x.text);return u.length>=4&&(n.indexOf(u)>=0||u.indexOf(n)>=0);});}
 function decorate(node,key,text,pmap){
   var ps=pmap[key]||[],hits=auditHits(text);
-  ps.forEach(function(p){var m=el("span","mark",shortMark(p));m.title=p;node.appendChild(m);});
-  hits.forEach(function(h){var m=el("span","mark audit","audit: not supported");m.title=h.problem||"The second pass found the cited source does not support this.";node.appendChild(m);});
+  ps.forEach(function(p){var m=el("span","mark",shortMark(p));m.title=plainProblem(p);node.appendChild(m);});
+  hits.forEach(function(h){var m=el("span","mark audit","source does not back this up");m.title=h.problem||"The second look found that the source does not support this line.";node.appendChild(m);});
   if(ps.length||hits.length)node.classList.add("hasprob");
 }
 
@@ -215,112 +263,141 @@ function applyMeta(j){S.state=j.state||S.state;S.audit=j.audit||null;S.inputs=j.
 async function refreshMeta(){try{var j=await api("/api/brief");applyMeta(j);}catch(e){}}
 
 /* ---------- render ---------- */
-function list(id,items,fmt,key,pmap,textOf){var ul=$(id);ul.textContent="";(items||[]).forEach(function(it,i){var li=el("li");li.appendChild(og(S.brief));fmt(li,it);if(key)decorate(li,key+":"+i,textOf?textOf(it):it.text,pmap);ul.appendChild(li);});if(!(items||[]).length)ul.appendChild(el("li","logline","None listed."));}
+function list(id,items,fmt,key,pmap,textOf,empty){var ul=$(id);ul.textContent="";(items||[]).forEach(function(it,i){var li=el("li");fmt(li,it);if(key)decorate(li,key+":"+i,textOf?textOf(it):it.text,pmap);ul.appendChild(li);});if(!(items||[]).length){var li=el("li","logline",empty||"Nothing listed.");ul.appendChild(li);}}
+function patientInput(){return (S.inputs||[]).filter(function(x){return x.kind==="patient";})[0];}
+function renderProv(){
+  var b=S.brief,o=originOf(b),pv=$("prov"),pi=patientInput(),n=3+(pi&&pi.approved?1:0);pv.className="prov "+o;pv.textContent="";
+  if(o==="sample"){pv.appendChild(el("b",null,"This is a hand-written example. "));pv.appendChild(document.createTextNode("The computer did not write it. Press “Run live on the records” to have it read the records now."));}
+  else{pv.appendChild(el("b",null,o==="live"?"Written by the computer just now":"Written by the computer"+(b.generated_at?" on "+when(b.generated_at):" earlier")));
+    pv.appendChild(document.createTextNode(", from "+(n===4?"the fax, the pharmacy history, the intake form and the patient's own answers":"the fax, the pharmacy history and the intake form")+". It can be wrong. Each line shows where it comes from, and nothing happens until you decide."));}
+  var ng=$("nudge");ng.textContent="";ng.hidden=true;
+  if(pi&&!pi.approved){ng.hidden=false;ng.appendChild(document.createTextNode("His own answers about his medicines are not included yet: he has not confirmed them, or the pharmacist has not approved them. "));var a=el("a",null,"Open the patient screen");a.href="/patient";ng.appendChild(a);ng.appendChild(document.createTextNode("."));}
+}
 function render(){
   var b=S.brief,st=S.state;if(!b)return;var pmap=problemIndex(b);
-  $("notice").textContent=b.notice||"Software-generated draft for clinician review. Not a diagnosis.";
-  var oh=$("origin");oh.textContent="";oh.appendChild(og(b,true));
-  var p=b.patient||{};$("pt").textContent=[p.name,p.age].filter(Boolean).join(", ")+(p.reason_for_visit?". "+p.reason_for_visit:"");
+  $("notice").textContent=(b.notice||"Software-generated draft for clinician review. Not a diagnosis.")+" All patient data on this page is invented.";
+  var p=b.patient||{};$("pt").textContent=[p.name,p.age].filter(Boolean).join(", ")||"New patient";
+  $("reason").textContent=p.reason_for_visit||"";
+  renderProv();
+  var ps=b.validation_problems||[],wt=$("warnTop");wt.hidden=!ps.length;
+  if(ps.length){wt.textContent="";wt.appendChild(el("b",null,ps.length+" line"+(ps.length===1?"":"s")+" below did not pass an automatic check. "));wt.appendChild(document.createTextNode("They are outlined in yellow. Treat them with extra care."));}
   list("story",b.story,function(li,it){withSrc(li,it.text,it.sources);},"story",pmap);
   var tb=$("meds");tb.textContent="";
+  var words={taking:"Taking",probably_not_taking:"Probably not taking",unclear:"Unclear"};
   (b.medications_actually_taking||[]).forEach(function(m,i){var tr=el("tr");
-    var n=el("td");n.appendChild(og(b));n.appendChild(document.createElement("br"));n.appendChild(document.createTextNode((m.drug||"")+(m.dose?" "+m.dose:"")));tr.appendChild(n);
-    var s=el("td");s.appendChild(el("span","st "+(m.status||""),String(m.status||"").replace(/_/g," ")));tr.appendChild(s);
+    var n=el("td","med");n.appendChild(document.createTextNode(cap(m.drug)));if(m.dose){n.appendChild(document.createElement("br"));n.appendChild(el("span","logline",m.dose));}tr.appendChild(n);
+    var s=el("td");s.appendChild(el("span","st "+(m.status||""),words[m.status]||cap(String(m.status||"").replace(/_/g," "))));tr.appendChild(s);
     var ev=withSrc(el("td"),m.evidence||"",m.sources);tr.appendChild(ev);
-    decorate(ev,"medications_actually_taking:"+i,m.evidence,pmap);if(ev.classList.contains("hasprob"))tr.classList.add("hasprob");
+    decorate(ev,"medications_actually_taking:"+i,m.evidence,pmap);
     tb.appendChild(tr);});
-  if(!(b.medications_actually_taking||[]).length){var tr0=el("tr"),td0=el("td","logline","None listed.");tr0.appendChild(td0);tb.appendChild(tr0);}
-  var a=$("allergy");a.textContent="";if(b.allergies){a.appendChild(og(b));withSrc(a,b.allergies.text||"",b.allergies.sources);decorate(a,"allergies:0",b.allergies.text,pmap);}
-  list("tests",b.tests_already_done,function(li,it){withSrc(li,[it.test,it.date,it.result].filter(Boolean).join(" · "),it.sources);},"tests_already_done",pmap,function(it){return it.result||it.test;});
+  if(!(b.medications_actually_taking||[]).length){var tr0=el("tr"),td0=el("td","logline","Nothing listed.");tr0.appendChild(td0);tb.appendChild(tr0);}
+  var a=$("allergy");a.textContent="";if(b.allergies){withSrc(a,b.allergies.text||"",b.allergies.sources);decorate(a,"allergies:0",b.allergies.text,pmap);}else a.appendChild(el("span","logline","Nothing listed."));
+  list("tests",b.tests_already_done,function(li,it){withSrc(li,[it.test,it.date?day(it.date):"",it.result].filter(Boolean).join(" · "),it.sources);},"tests_already_done",pmap,function(it){return it.result||it.test;});
   list("open",b.open_items_from_other_clinicians,function(li,it){withSrc(li,it.text,it.sources);},"open_items_from_other_clinicians",pmap);
   list("nf",(b.not_found||[]).map(function(t){return {text:t};}),function(li,it){li.appendChild(document.createTextNode(it.text));});
   renderFlags(pmap);renderAudit();renderChecks();renderInputs();renderRaw();
   var lg=$("log");lg.textContent="";
-  (st.log||[]).slice().reverse().forEach(function(e){var txt;
-    if(e.type==="decision")txt=e.flag_id+" · "+(e.action==="accept"?"accepted":"dismissed")+" by "+e.by+(e.reason?" · "+e.reason:"");
-    else if(e.type==="patient_review")txt="patient answers "+(e.status==="approved"?"approved":e.status==="returned"?"sent back":e.status)+" by "+(e.by||"pharmacist")+(e.note?" · "+e.note:"");
-    else if(e.flag_id)txt=e.flag_id+" · marked "+e.status+" by "+e.by+(e.note?" · "+e.note:"");
+  var titles={};(b.medication_issues||[]).forEach(function(f){titles[f.id]=f.title;});
+  (st.log||[]).slice().reverse().forEach(function(e){var txt,what=titles[e.flag_id]?"“"+titles[e.flag_id]+"”":e.flag_id;
+    if(e.type==="decision")txt=e.by+(e.action==="accept"?" will review ":" set aside ")+what+(e.reason?" · reason: "+e.reason:"");
+    else if(e.type==="patient_review")txt=(e.by||"Pharmacist")+(e.status==="approved"?" approved the patient's answers":e.status==="returned"?" sent the patient's answers back":" reviewed the patient's answers")+(e.note?" · "+e.note:"");
+    else if(e.flag_id)txt=e.by+(e.status==="verified"?" checked and confirmed ":" could not confirm ")+what+(e.note?" · "+e.note:"");
     else txt=(e.type||"event")+(e.detail?" · "+e.detail:"");
     lg.appendChild(el("li",null,when(e.at)+" · "+txt));});
   if(!(st.log||[]).length)lg.appendChild(el("li",null,"No decisions yet."));
   $("rolePharm").setAttribute("aria-pressed",S.role==="pharmacist");$("rolePhys").setAttribute("aria-pressed",S.role==="physician");
   $("rolePharm").disabled=!S.hasPharm;
 }
+function pharmLine(v){
+  if(!S.hasPharm)return el("div","pharm unresolved","Not checked by a pharmacist: this clinic has none.");
+  if(!v)return el("div","pharm","A pharmacist has not checked this yet.");
+  return el("div","pharm "+v.status,(v.status==="verified"?"✓ Checked and confirmed by ":"Could not be confirmed by ")+v.by+", "+when(v.at)+(v.note?": “"+v.note+"”":""));}
+function flagCard(f,i,pmap){
+  var b=S.brief,st=S.state,d=(st.decisions||{})[f.id],v=(st.verifications||{})[f.id];
+  var later=f.when!=="before_visit",isPhys=S.role==="physician";
+  var collapsed=isPhys&&d&&!S.editing[f.id];
+  var card=el("div","flag"+(later?" later":"")+(isPhys&&d?" "+d.action:"")+(collapsed?" done":""));
+  var t=el("div","title",f.title);decorate(t,"medication_issues:"+i,f.title,pmap);
+  if(t.classList.contains("hasprob")){t.classList.remove("hasprob");card.classList.add("hasprob");}
+  card.appendChild(t);
+  if(collapsed){
+    var o=el("div","outcome "+d.action,d.action==="accept"?"✓ You will review this at the visit.":"Set aside: “"+d.reason+"”");
+    var ch=el("button","link","Change");ch.type="button";ch.style.marginLeft="10px";ch.onclick=function(){S.editing[f.id]=true;render();};o.appendChild(ch);card.appendChild(o);return card;}
+  card.appendChild(el("div","why",f.why_review));
+  var fr=el("div","from","Where this comes from: ");(f.sources||[]).forEach(function(s){fr.appendChild(chip(s));});card.appendChild(fr);
+  card.appendChild(pharmLine(v));
+  if(S.role==="pharmacist"&&S.hasPharm){
+    var row=el("div","row"),ta=el("textarea");ta.rows=2;ta.id="note-"+f.id;ta.placeholder="What did you check, and what did you find?";ta.setAttribute("aria-label","Pharmacist note for "+f.title);ta.value=v?v.note:"";
+    var ok=el("button","act yes","I checked: this is right"),un=el("button","act","I could not confirm this");ok.type=un.type="button";
+    ok.onclick=function(){verify(f.id,"verified",ta.value);};un.onclick=function(){verify(f.id,"unresolved",ta.value);};
+    row.appendChild(ta);row.appendChild(ok);row.appendChild(un);card.appendChild(row);
+  }else if(isPhys){
+    var r2=el("div","row");
+    if(S.asking[f.id]){
+      var inp=el("input");inp.type="text";inp.id="reason-"+f.id;inp.placeholder="In a few words, why is this not a concern?";inp.setAttribute("aria-label","Reason for setting aside: "+f.title);
+      var go=el("button","act","Set aside"),ca=el("button","link","Cancel");go.type=ca.type="button";
+      go.onclick=function(){if(!inp.value.trim()){inp.placeholder="Please add a few words first, so the next person knows why";inp.style.borderColor="var(--risk)";inp.focus();return;}decide(f.id,"dismiss",inp.value);};ca.onclick=function(){delete S.asking[f.id];render();};
+      inp.onkeydown=function(e){if(e.key==="Enter")go.click();};
+      r2.appendChild(inp);r2.appendChild(go);r2.appendChild(ca);card.appendChild(r2);setTimeout(function(){inp.focus();},0);
+    }else{
+      var ac=el("button","act yes","I’ll review this"),di=el("button","act","Not a concern…");ac.type=di.type="button";
+      ac.onclick=function(){decide(f.id,"accept","");};di.onclick=function(){S.asking[f.id]=true;render();};
+      r2.appendChild(ac);r2.appendChild(di);card.appendChild(r2);
+    }
+  }
+  return card;
+}
 function renderFlags(pmap){
   var box=$("flags"),b=S.brief,st=S.state;box.textContent="";
-  var issues=b.medication_issues||[];
-  $("flagsTitle").textContent="Medication issues to review ("+issues.length+")";
-  issues.forEach(function(f,i){
-    var d=(st.decisions||{})[f.id],v=(st.verifications||{})[f.id];
-    var card=el("div","flag"+(d?" "+d.action:""));
-    var top=el("div");top.appendChild(og(b));top.appendChild(el("span","when",f.when==="before_visit"?"SORT OUT BEFORE THE VISIT":"DISCUSS AT THE VISIT"));
-    decorate(top,"medication_issues:"+i,f.title,pmap);card.appendChild(top);
-    if(top.classList.contains("hasprob")){top.classList.remove("hasprob");card.classList.add("hasprob");}
-    card.appendChild(el("b",null,f.title));
-    card.appendChild(el("span",null,f.why_review));
-    var sr=el("div");(f.sources||[]).forEach(function(s){var c=chip(s);c.style.marginLeft="0";c.style.marginRight="5px";sr.appendChild(c);});card.appendChild(sr);
-    var stamp;
-    if(!S.hasPharm)stamp=el("span","stamp none","unverified · no pharmacist at this clinic");
-    else if(v)stamp=el("span","stamp "+v.status,(v.status==="verified"?"verified by ":"unresolved · checked by ")+v.by+" · "+when(v.at));
-    else stamp=el("span","stamp","draft · not yet verified");
-    card.appendChild(stamp);
-    if(S.hasPharm&&v&&v.note)card.appendChild(el("span","logline","Pharmacist note: "+v.note));
-    if(S.role==="pharmacist"&&S.hasPharm){
-      var row=el("div","row"),ta=el("textarea");ta.rows=2;ta.id="note-"+f.id;ta.placeholder="What you checked and found";ta.setAttribute("aria-label","Pharmacist note for "+f.title);ta.value=v?v.note:"";
-      var ok=el("button","act","Mark verified"),un=el("button","act","Mark unresolved");ok.type=un.type="button";
-      ok.onclick=function(){verify(f.id,"verified",ta.value);};un.onclick=function(){verify(f.id,"unresolved",ta.value);};
-      row.appendChild(ta);row.appendChild(ok);row.appendChild(un);card.appendChild(row);
-    }else if(S.role==="physician"){
-      if(d){card.appendChild(el("span","logline",(d.action==="accept"?"Accepted":"Dismissed")+" by "+d.by+", "+when(d.at)+(d.reason?": "+d.reason:"")));}
-      var r2=el("div","row"),inp=el("input");inp.type="text";inp.id="reason-"+f.id;inp.placeholder="Reason (needed to dismiss)";inp.setAttribute("aria-label","Reason for "+f.title);
-      var ac=el("button","act",d?"Change to accept":"Accept"),di=el("button","act",d?"Change to dismiss":"Dismiss");ac.type=di.type="button";
-      ac.onclick=function(){decide(f.id,"accept",inp.value);};di.onclick=function(){decide(f.id,"dismiss",inp.value);};
-      r2.appendChild(inp);r2.appendChild(ac);r2.appendChild(di);card.appendChild(r2);
-    }
-    box.appendChild(card);
-  });
-  if(!issues.length)box.appendChild(el("span","logline","No medication issues raised."));
+  var issues=b.medication_issues||[],n=issues.length;
+  var words=["No","One","Two","Three","Four","Five","Six"];
+  $("flagsTitle").textContent=n?(words[n]||n)+" thing"+(n===1?"":"s")+" to review about his medicines":"Nothing to review about his medicines";
+  var pr=$("progress");
+  if(!n)pr.textContent="The records, the pharmacy history and the intake form agree with each other.";
+  else if(S.role==="pharmacist"){var c=issues.filter(function(f){return (st.verifications||{})[f.id];}).length;pr.textContent="You have checked "+c+" of "+n+". Your note travels with each item to the physician.";}
+  else{var dn=issues.filter(function(f){return (st.decisions||{})[f.id];}).length;pr.textContent=dn===n?"You have decided on all "+n+". ":"You have decided on "+dn+" of "+n+". Most urgent first.";}
+  var now=[],later=[];issues.forEach(function(f,i){(f.when==="before_visit"?now:later).push([f,i]);});
+  if(now.length){box.appendChild(el("div","group now","Sort out before he walks in"));now.forEach(function(x){box.appendChild(flagCard(x[0],x[1],pmap));});}
+  if(later.length){box.appendChild(el("div","group later","Talk about during the visit"));later.forEach(function(x){box.appendChild(flagCard(x[0],x[1],pmap));});}
 }
 function renderAudit(){
   var a=S.audit;$("auditBox").hidden=!a;var inl=$("auditInline");inl.textContent="";if(!a)return;var box=$("audit");box.textContent="";
   var u=a.unsupported||[],m=a.missing||[];
-  var summary=u.length+" statement"+(u.length===1?"":"s")+" not supported by the cited source. "+m.length+" fact"+(m.length===1?"":"s")+" the brief left out.";
-  box.appendChild(el("p",null,summary));
-  var ul=el("ul");u.forEach(function(x){var li=el("li",null,"Not supported: "+x.text+(x.problem?" ("+x.problem+")":""));(x.cited||[]).forEach(function(c){li.appendChild(chip(c));});ul.appendChild(li);});
+  var summary=(u.length?u.length+" line"+(u.length===1?" is":"s are")+" not backed up by the source named. ":"Every line matches the source it names. ")+(m.length?m.length+" fact"+(m.length===1?"":"s")+" in the records did not make it into the brief.":"Nothing important was left out.");
+  box.appendChild(el("p",(u.length||m.length)?"warnitem":"okitem",summary));
+  var ul=el("ul");ul.style.marginTop="8px";u.forEach(function(x){var li=el("li",null,"Not backed up: "+x.text+(x.problem?" ("+x.problem+") ":" "));(x.cited||[]).forEach(function(c){li.appendChild(chip(c));});ul.appendChild(li);});
   m.forEach(function(x){withSrc(ul.appendChild(el("li")),"Left out: "+x.text,x.sources);});box.appendChild(ul);
-  var h=el("h3",null,"Second-pass audit");inl.appendChild(h);
-  var p=el("p",(u.length||m.length)?"warnitem":"okitem",summary+((u.length||m.length)?" Details below the brief; unsupported lines are marked.":""));p.style.margin="4px 0 0";inl.appendChild(p);
+  if(u.length||m.length){$("how").open=true;}
 }
 function renderChecks(){
   var ul=$("checks");ul.textContent="";var b=S.brief,ps=b.validation_problems;
-  if(!Array.isArray(ps)){ul.appendChild(el("li","logline","The server did not report automatic checks for this brief."));return;}
-  if(!ps.length){var n=(b.medication_issues||[]).length;
-    ul.appendChild(el("li","okitem","All automatic checks passed: every line has a source, "+n+" medication issue"+(n===1?"":"s")+" (cap 6), no order-like wording."));return;}
-  ul.appendChild(el("li",null,ps.length+" automatic check"+(ps.length===1?"":"s")+" failed. Affected lines are outlined in yellow."));
-  ps.forEach(function(p){var li=el("li","warnitem");li.appendChild(document.createTextNode(plainProblem(p)+" "));li.appendChild(el("span","code","("+p+")"));ul.appendChild(li);});
+  if(!Array.isArray(ps)){ul.appendChild(el("li","logline","No automatic checks were reported for this brief."));return;}
+  if(!ps.length){["Every line says where it comes from.","No more than six items to review, so the list stays short.","Nothing is worded as an order or a diagnosis."].forEach(function(t){ul.appendChild(el("li","okitem","✓ "+t));});return;}
+  ps.forEach(function(p){var li=el("li","warnitem");li.appendChild(document.createTextNode(plainProblem(p)+". "));li.appendChild(el("span","code",p));ul.appendChild(li);});
 }
 function renderInputs(){
   var ul=$("inputs");ul.textContent="";
-  if(!S.inputs.length){ul.appendChild(el("li","logline","The server did not list its inputs."));return;}
+  if(!S.inputs.length){ul.appendChild(el("li","logline","The list of records is not available."));return;}
+  var names={pdf:"Faxed records from other hospitals (12 pages)",csv:"Pharmacy history: what was actually picked up",md:"Intake form, filled in by his daughter",patient:"The patient's own answers and bottle photos"};
   S.inputs.forEach(function(x){var li=el("li");
-    var a=el("a",null,x.name);a.href=x.url;a.target="_blank";a.rel="noopener";li.appendChild(a);
-    li.appendChild(el("span","kind",x.kind));li.appendChild(el("span","inv","invented data"));
-    if(x.kind==="patient"){var ap=!!x.approved;li.appendChild(el("span","appr "+(ap?"yes":"no"),ap?"approved · sent to the model":"not approved · not sent"));}
+    var a=el("a",null,names[x.kind]||x.name);a.href=x.url;a.target="_blank";a.rel="noopener";li.appendChild(a);
+    li.appendChild(el("span","inv","invented"));
+    if(x.kind==="patient"){var ap=!!x.approved;li.appendChild(el("span","appr "+(ap?"yes":"no"),ap?"approved by the pharmacist · included":"not approved yet · not included"));}
     ul.appendChild(li);});
 }
 function renderRaw(){
-  var box=$("raw");box.textContent="";var r=S.raw||{},names={prompt:"Prompt sent",response:"Raw model reply",brief:"Parsed brief (JSON)",audit:"Audit (JSON)"},any=false;
-  ["prompt","response","brief","audit"].forEach(function(k){if(!r[k])return;any=true;var a=el("a",null,names[k]+" ↗");a.href=r[k];a.target="_blank";a.rel="noopener";a.title=r[k];box.appendChild(a);});
-  if(!any)box.appendChild(el("span","logline","No raw files yet. They appear after a model run."));
+  var box=$("raw");box.textContent="";var r=S.raw||{},names={prompt:"The instructions and records sent",response:"The computer's reply, unedited",brief:"The brief as data",audit:"The second look as data"},any=false;
+  ["prompt","response","brief","audit"].forEach(function(k){if(!r[k])return;any=true;var a=el("a",null,names[k]+" ↗");a.href=r[k];a.target="_blank";a.rel="noopener";box.appendChild(a);});
+  if(!any)box.appendChild(el("span","logline","Nothing yet. These appear after the computer has read the records."));
 }
 
 /* ---------- banners ---------- */
 function banner(kind,title,body){var bx=$("bannerBox");bx.textContent="";if(!kind){bx.hidden=true;return;}
   var d=el("div","banner "+kind);d.setAttribute("role",kind==="bad"?"alert":"status");d.appendChild(el("b",null,title));if(body)d.appendChild(el("span",null,body));bx.appendChild(d);bx.hidden=false;}
 function whatShown(b){var o=originOf(b);
-  if(o==="saved")return "Now showing the brief SAVED from an earlier model run"+(b.generated_at?" ("+when(b.generated_at)+")":"")+". It is real model output, but not from this run.";
-  if(o==="live")return "Now showing LIVE model output.";
-  return "Now showing the HAND-WRITTEN SAMPLE brief. It is not model output.";}
+  if(o==="saved")return "You are now looking at the brief the computer wrote earlier"+(b.generated_at?" ("+when(b.generated_at)+")":"")+", not one from this run.";
+  if(o==="live")return "You are looking at what the computer just wrote.";
+  return "You are now looking at the hand-written example. The computer did not write it.";}
 
 /* ---------- live run over SSE (POST, so fetch + ReadableStream) ---------- */
 var L=null;
@@ -333,9 +410,9 @@ async function runLive(){
   if(S.running)return;S.running=true;
   var before=S.brief;
   L={t0:Date.now(),lastEvent:Date.now(),timeout:60,ctrl:new AbortController(),finished:false,chars:0,deltas:0,before:before};
-  $("liveBox").hidden=false;$("stream").textContent="";$("liveMeta").textContent="";banner(null);
+  $("liveBox").hidden=false;$("stream").textContent="";$("liveBox").hidden=false;$("liveMeta").textContent="";banner(null);
   $("live").disabled=true;$("live").textContent="Running live…";$("stop").hidden=false;
-  liveStatus("Sending the records to the model…");
+  liveStatus("Sending the records to the computer…");$("how").open=true;$("streamWrap").open=true;$("liveBox").scrollIntoView({block:"nearest"});
   L.tick=setInterval(setTimer,100);setTimer();
   var myL=L;
   try{
@@ -363,11 +440,11 @@ function handleEvent(myL,raw){
   if(!data.length&&ev==="message")return; // keep-alive comment
   var d={};try{d=JSON.parse(data.join("\n")||"{}");}catch(e){d={text:data.join("\n")};}
   if(ev==="start"){if(d.timeout_s)myL.timeout=+d.timeout_s;
-    liveStatus("Model is reading the records…");
+    liveStatus("Reading the fax, the pharmacy history and the intake form"+((d.sources||[]).indexOf("patient")>=0?", plus the patient's own answers and bottle photos":"")+"…");
     $("liveMeta").textContent="model: "+(d.model||"?")+" · timeout: "+myL.timeout+" s · sources: "+(d.sources||[]).join(", ");}
   else if(ev==="delta"){var t=d.text||"";myL.chars+=t.length;myL.deltas++;var pre=$("stream");var atBottom=pre.scrollHeight-pre.scrollTop-pre.clientHeight<40;
     pre.appendChild(document.createTextNode(t));if(atBottom)pre.scrollTop=pre.scrollHeight;
-    liveStatus("Model is writing… "+myL.chars.toLocaleString()+" characters so far");}
+    liveStatus("Writing the brief…");}
   else if(ev==="done")finishLive("done",d);
   else if(ev==="error")finishLive("error",d);
   else if(ev==="timeout")finishLive("timeout",d);
@@ -379,34 +456,35 @@ function finishLive(kind,d){
   S.running=false;$("live").disabled=false;$("live").textContent="Run live on the records";$("stop").hidden=true;
   if(kind==="done"&&d.brief){
     S.brief=d.brief;if(!S.brief.origin)S.brief.origin="live";S.audit=null;
-    liveStatus("Finished in "+secs+" s. "+myL.chars.toLocaleString()+" characters written.");
-    banner("good","Live run finished in "+secs+" s","The brief below is LIVE model output from this run. Every line still needs a person to check it.");
+    liveStatus("The brief is ready. It took "+secs+" seconds.");$("streamWrap").open=false;
+    banner(null);
     // any saved audit was for the earlier brief, so drop it until "Check against sources" is pressed again
     render();refreshMeta().then(function(){S.audit=null;render();});return;
   }
   var fb=d&&d.fallback,shown;
   if(fb){S.brief=fb;}else{S.brief=myL.before;}
   shown=S.brief;
-  var title=kind==="timeout"?"The live call stalled: no complete brief after "+(myL.timeout)+" s":
-            kind==="guard"?"The live call stalled: the server went quiet, so the page stopped waiting":
-            "The live call failed";
-  var detail=whatShown(shown)+(d&&d.detail?" (Server said: "+d.detail+")":"");
+  var title=kind==="timeout"?"The computer took too long (over "+(myL.timeout)+" seconds), so we stopped waiting":
+            kind==="guard"?"The computer went quiet, so we stopped waiting":
+            "The computer could not write a new brief";
+  var detail=whatShown(shown)+(d&&d.detail?" Technical detail: "+d.detail:"");
   liveStatus((kind==="done"?"Finished without a brief":"Stopped")+" after "+secs+" s.");
   banner("bad",title,detail);
   render();refreshMeta().then(render);
 }
 $("stop").onclick=function(){finishLive("guard",{detail:"Stopped by the presenter."});};
 
+$("hideLive").onclick=function(){$("liveBox").hidden=true;};
 /* ---------- other actions ---------- */
 async function verify(id,status,note){try{S.state=await api("/api/verify",{flag_id:id,status:status,note:note,by:"Pharmacist"});render();}catch(e){}}
-async function decide(id,action,reason){try{S.state=await api("/api/decision",{flag_id:id,action:action,reason:reason,by:"Clara"});render();}catch(e){}}
+async function decide(id,action,reason){try{S.state=await api("/api/decision",{flag_id:id,action:action,reason:reason,by:"Clara"});delete S.asking[id];delete S.editing[id];render();}catch(e){}}
 $("rolePharm").onclick=function(){S.role="pharmacist";render();};
 $("rolePhys").onclick=function(){S.role="physician";render();};
 $("hasPharm").onchange=function(e){S.hasPharm=e.target.checked;if(!S.hasPharm)S.role="physician";render();};
-$("reset").onclick=async function(){try{S.state=await api("/api/reset",{});render();}catch(e){}};
+$("reset").onclick=async function(){try{S.state=await api("/api/reset",{});S.asking={};S.editing={};render();}catch(e){}};
 $("live").onclick=runLive;
-$("aud").onclick=async function(){var b=$("aud");b.disabled=true;b.textContent="Checking…";
-  try{var j=await api("/api/audit",{});S.audit=j.audit;await refreshMeta();S.audit=j.audit;render();}catch(e){}finally{b.disabled=false;b.textContent="Check against sources";}};
+$("aud").onclick=async function(){var b=$("aud");b.disabled=true;b.textContent="Looking…";
+  try{var j=await api("/api/audit",{});S.audit=j.audit;await refreshMeta();S.audit=j.audit;render();}catch(e){}finally{b.disabled=false;b.textContent="Run the second look";}};
 load().catch(function(){});
 </script>
 </body>
