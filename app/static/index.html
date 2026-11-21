@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CoVigil</title>
 <style>
-:root{--bg:#eef0f3;--card:#fcfcfb;--ink:#151a22;--muted:#586173;--line:#d3d8e0;--accent:#1f3fbf;--soft:#e3e8fb;--review:#ec835a;--ok:#2f7d57;--risk:#b4541f}
+:root{--bg:#eef0f3;--card:#fcfcfb;--ink:#151a22;--muted:#586173;--line:#d3d8e0;--accent:#1f3fbf;--soft:#e3e8fb;--review:#ec835a;--ok:#2f7d57;--risk:#b4541f;
+  --live:#17703f;--saved:#1f3fbf;--sample:#b3261e;--warn:#8a5a00;--warnbg:#fff4d6}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 header{background:var(--card);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;position:sticky;top:0;z-index:2}
 header b{font-size:18px}
@@ -16,9 +18,13 @@ header b{font-size:18px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
 .seg button{border:0;background:var(--card);padding:6px 12px;font:inherit;cursor:pointer;color:var(--ink)}
 .seg button[aria-pressed=true]{background:var(--accent);color:#fff}
-button.act{font:inherit;font-size:13px;padding:5px 11px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}
-button.act:hover{border-color:var(--accent);color:var(--accent)}
-button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg button:disabled{color:var(--muted);cursor:not-allowed}
+button.act,a.act{font:inherit;font-size:13px;padding:5px 11px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
+button.act:hover,a.act:hover{border-color:var(--accent);color:var(--accent)}
+button.act:disabled{opacity:.55;cursor:not-allowed}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+button.primary:hover{background:#18329a;color:#fff}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 main{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:18px 20px;max-width:1280px;margin:0 auto}
 @media (max-width:900px){main{grid-template-columns:1fr}}
 section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:12px}
@@ -29,7 +35,7 @@ ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px
 .src{font:11px ui-monospace,Menlo,monospace;color:var(--accent);border:1px solid var(--line);border-radius:4px;padding:1px 5px;white-space:nowrap;margin-left:4px;text-decoration:none;display:inline-block}
 a.src:hover{border-color:var(--accent)}
 table{border-collapse:collapse;width:100%;font-size:14px}
-td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+td,th{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
 .st{font:11px ui-monospace,Menlo,monospace;border-radius:4px;padding:1px 6px;border:1px solid var(--line);white-space:nowrap}
 .st.probably_not_taking,.st.unclear{border-color:var(--risk);color:var(--risk)}
 .flag{border:1px solid var(--line);border-left:4px solid var(--review);border-radius:7px;padding:12px;display:flex;flex-direction:column;gap:7px}
@@ -43,24 +49,93 @@ input[type=text],textarea{font:inherit;font-size:14px;border:1px solid var(--lin
 .err{color:var(--risk);font-size:13px}
 #log li{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
 .wide{grid-column:1/-1}
+
+/* origin badges: solid fills so they read on a projector */
+.og{display:inline-block;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.03em;border-radius:4px;padding:2px 7px;margin-right:6px;vertical-align:1px;white-space:nowrap;color:#fff}
+.og.live{background:var(--live)}.og.saved{background:var(--saved)}.og.sample{background:var(--sample)}
+.og.big{font-size:13px;padding:4px 10px}
+
+/* banners and checks */
+.banner{border-radius:8px;padding:12px 14px;font-size:15px;border:2px solid}
+.banner b{display:block;font-size:17px;margin-bottom:2px}
+.banner.bad{background:#fdecea;border-color:var(--sample);color:#6d1410}
+.banner.good{background:#e7f5ec;border-color:var(--live);color:#0d4527}
+.banner.info{background:var(--soft);border-color:var(--saved);color:#13286e}
+.checks li{font-size:14px}
+.warnitem{background:var(--warnbg);border:1px solid #e6c56a;color:#4a3200;border-radius:6px;padding:6px 10px}
+.okitem{color:var(--ok);font-size:14px}
+.code{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+.mark{display:inline-block;font:700 11px/1.3 system-ui,sans-serif;border-radius:4px;padding:1px 6px;margin-left:6px;background:var(--warnbg);color:#4a3200;border:1px solid #e6c56a;white-space:nowrap}
+.mark.audit{background:#fdecea;color:#6d1410;border-color:#e9a39d}
+.hasprob{outline:2px dashed #d9a520;outline-offset:3px;border-radius:4px}
+tr.hasprob{outline-offset:-2px}
+
+/* inputs */
+.inputs li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+.inputs a{color:var(--accent);font-weight:600}
+.kind{font:11px ui-monospace,Menlo,monospace;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.inv{font:700 11px/1.3 system-ui,sans-serif;border:1px dashed var(--muted);color:var(--muted);border-radius:4px;padding:1px 6px}
+.appr{font:700 12px/1.3 system-ui,sans-serif;border-radius:4px;padding:2px 8px;color:#fff}
+.appr.yes{background:var(--live)}.appr.no{background:#6b7280}
+
+/* live run */
+.liveTop{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+.timer{font:700 44px/1 ui-monospace,Menlo,monospace;letter-spacing:-.02em;min-width:5.5ch}
+.timer small{font-size:20px;color:var(--muted);font-weight:500}
+.bar{flex:1;min-width:200px;height:14px;background:#dfe3ea;border-radius:7px;overflow:hidden}
+.bar>div{height:100%;width:0;background:var(--live);transition:width .2s linear}
+.bar.late>div{background:var(--risk)}
+.livestatus{font-size:15px;font-weight:600}
+.liveMeta{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+pre.stream{margin:0;background:#10141b;color:#d7f7df;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;border-radius:8px;padding:12px;height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+pre.stream:empty::before{content:"(nothing written by the model yet)";color:#7d8796}
+.raw{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+.raw a{font:12px ui-monospace,Menlo,monospace;color:var(--accent);border:1px solid var(--line);border-radius:5px;padding:2px 8px;text-decoration:none}
+.raw a:hover{border-color:var(--accent)}
 </style>
 </head>
 <body>
 <header>
   <b>CoVigil</b>
   <span class="notice" id="notice"></span>
-  <span class="badge" id="origin"></span>
+  <span id="origin"></span>
   <label class="row" style="font-size:13px"><input type="checkbox" id="hasPharm" checked> Clinic has a pharmacist</label>
   <div class="seg" role="group" aria-label="Viewing as">
     <button type="button" id="rolePharm" aria-pressed="false">Pharmacist</button>
     <button type="button" id="rolePhys" aria-pressed="true">Physician</button>
   </div>
-  <button class="act" type="button" id="gen">Run on the records</button>
+  <button class="act primary" type="button" id="live">Run live on the records</button>
   <button class="act" type="button" id="aud">Check against sources</button>
   <button class="act" type="button" id="reset">Reset reviews</button>
-  <span class="err" id="err"></span>
+  <a class="act" href="/patient" id="patientLink">Patient screen</a>
+  <span class="err" id="err" role="alert"></span>
 </header>
 <main>
+  <div class="wide" id="bannerBox" hidden></div>
+
+  <section class="wide" id="liveBox" hidden aria-live="polite">
+    <h2>Live run: what the model is writing</h2>
+    <div class="liveTop">
+      <div class="timer" id="timer" aria-label="Elapsed seconds">0.0<small> s</small></div>
+      <div class="bar" id="bar"><div></div></div>
+      <button class="act" type="button" id="stop" hidden>Stop and keep the last brief</button>
+    </div>
+    <div class="livestatus" id="liveStatus"></div>
+    <div class="liveMeta" id="liveMeta"></div>
+    <pre class="stream" id="stream" tabindex="0" aria-label="Raw model text as it streams"></pre>
+  </section>
+
+  <section>
+    <h2>Inputs: what goes to the model</h2>
+    <ul class="inputs" id="inputs"></ul>
+    <span class="logline">Every input is invented for this demo. Patient answers are sent only after a pharmacist approves them.</span>
+  </section>
+  <section class="checks">
+    <h2>Checks on this brief</h2>
+    <ul id="checks"></ul>
+    <div id="auditInline"></div>
+  </section>
+
   <section>
     <h2>The brief</h2>
     <div class="pt" id="pt"></div>
@@ -81,61 +156,106 @@ input[type=text],textarea{font:inherit;font-size:14px;border:1px solid var(--lin
     <div id="audit"></div>
   </section>
   <section class="wide">
+    <h2>See exactly what was sent and what came back</h2>
+    <div class="raw" id="raw"></div>
+  </section>
+  <section class="wide">
     <h2>Decision log</h2>
     <ul id="log"></ul>
   </section>
 </main>
 <script>
-var S={brief:null,state:null,audit:null,role:"physician",hasPharm:true};
+var S={brief:null,state:{verifications:{},decisions:{},log:[]},audit:null,inputs:[],raw:{},role:"physician",hasPharm:true,running:false};
 function $(id){return document.getElementById(id);}
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
 function chip(s){var m=/^fax p\.?\s*(\d+)/i.exec(s),e;
   if(m){e=el("a","src",s);e.href="/data/outside_records_fax.pdf#page="+m[1];e.target="_blank";e.rel="noopener";e.title="Open this page of the fax";}
+  else if(/^(patient|bottle photo)\b/i.test(s)){e=el("a","src",s);e.href="/patient#staff";e.target="_blank";e.rel="noopener";e.title="Open the patient's answers and photos";}
   else e=el("span","src",s);return e;}
 function withSrc(parent,text,sources){parent.appendChild(document.createTextNode(text+" "));(sources||[]).forEach(function(s){parent.appendChild(chip(s));});return parent;}
-function list(id,items,fmt){var ul=$(id);ul.textContent="";(items||[]).forEach(function(it){var li=el("li");fmt(li,it);ul.appendChild(li);});if(!(items||[]).length)ul.appendChild(el("li","logline","None listed."));}
-function when(t){try{return new Date(t).toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});}catch(e){return t;}}
+function when(t){if(!t)return "";var d=new Date(t);if(isNaN(d))return String(t);return d.toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});}
 async function api(path,body){
   $("err").textContent="";
   var r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:undefined);
   var j=await r.json().catch(function(){return {};});
-  if(!r.ok){$("err").textContent=j.detail||("Request failed ("+r.status+")");throw new Error(j.detail);}
+  if(!r.ok){var d=j.detail;if(typeof d!=="string")d=d?JSON.stringify(d):("Request failed ("+r.status+")");$("err").textContent=d;throw new Error(d);}
   return j;
 }
-async function load(){var j=await api("/api/brief");S.brief=j.brief;S.state=j.state;S.audit=j.audit;render();}
+
+/* ---------- origin ---------- */
+function originOf(b){var o=(b&&b.origin)||"sample";if(o==="model")return "saved";if(o==="fixture")return "sample";return o;}
+function originLabel(b){var o=originOf(b);
+  if(o==="live")return "LIVE model output";
+  if(o==="saved")return "SAVED earlier run"+(b.generated_at?" · "+when(b.generated_at):"");
+  return "HAND-WRITTEN SAMPLE — not model output";}
+function og(b,big){var o=originOf(b),s=el("span","og "+o+(big?" big":""),originLabel(b));
+  s.title=o==="live"?"Written by the model during this session":o==="saved"?"Written by the model in an earlier run"+(b.generated_at?" at "+b.generated_at:""):"Hand-written by the team so the page works without a model. Not model output.";return s;}
+
+/* ---------- checks: map "story[2] has no sources" to items ---------- */
+function problemIndex(b){var map={};(b.validation_problems||[]).forEach(function(p){
+  var m=/^([a-z_]+)\[(\d+)\]/.exec(p);if(m){var k=m[1]+":"+m[2];(map[k]=map[k]||[]).push(p);}});return map;}
+var SECTION_NAMES={story:"Story line",medication_issues:"Medication issue",tests_already_done:"Test",medications_actually_taking:"Medication row",open_items_from_other_clinicians:"Open item"};
+function plainProblem(p){var m=/^([a-z_]+)\[(\d+)\]\s*(.*)$/.exec(p);if(!m)return p;
+  var what=SECTION_NAMES[m[1]]||m[1];var rest=m[3].replace(/^has no sources$/,"has no source").replace(/^reads like an order or diagnosis/,"reads like an order or diagnosis");
+  return what+" "+(+m[2]+1)+" "+rest;}
+function shortMark(p){if(/no sources?/.test(p))return "check: no source";if(/order|diagnosis/.test(p))return "check: order-like wording";if(/when/.test(p))return "check: bad timing";return "check failed";}
+function norm(t){return String(t||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
+function auditHits(text){var a=S.audit;if(!a||!a.unsupported||!text)return [];var n=norm(text);if(n.length<4)return [];
+  return a.unsupported.filter(function(x){var u=norm(x.text);return u.length>=4&&(n.indexOf(u)>=0||u.indexOf(n)>=0);});}
+function decorate(node,key,text,pmap){
+  var ps=pmap[key]||[],hits=auditHits(text);
+  ps.forEach(function(p){var m=el("span","mark",shortMark(p));m.title=p;node.appendChild(m);});
+  hits.forEach(function(h){var m=el("span","mark audit","audit: not supported");m.title=h.problem||"The second pass found the cited source does not support this.";node.appendChild(m);});
+  if(ps.length||hits.length)node.classList.add("hasprob");
+}
+
+/* ---------- loading ---------- */
+async function load(){var j=await api("/api/brief");S.brief=j.brief;applyMeta(j);render();}
+function applyMeta(j){S.state=j.state||S.state;S.audit=j.audit||null;S.inputs=j.inputs||[];S.raw=j.raw||{};}
+async function refreshMeta(){try{var j=await api("/api/brief");applyMeta(j);}catch(e){}}
+
+/* ---------- render ---------- */
+function list(id,items,fmt,key,pmap,textOf){var ul=$(id);ul.textContent="";(items||[]).forEach(function(it,i){var li=el("li");li.appendChild(og(S.brief));fmt(li,it);if(key)decorate(li,key+":"+i,textOf?textOf(it):it.text,pmap);ul.appendChild(li);});if(!(items||[]).length)ul.appendChild(el("li","logline","None listed."));}
 function render(){
-  var b=S.brief,st=S.state;
+  var b=S.brief,st=S.state;if(!b)return;var pmap=problemIndex(b);
   $("notice").textContent=b.notice||"Software-generated draft for clinician review. Not a diagnosis.";
-  $("origin").textContent=b.origin==="model"?"generated by "+(b.generated_by||"model"):"hand-written sample, not model output";
-  $("origin").className="badge "+(b.origin==="model"?"md":"fx");
+  var oh=$("origin");oh.textContent="";oh.appendChild(og(b,true));
   var p=b.patient||{};$("pt").textContent=[p.name,p.age].filter(Boolean).join(", ")+(p.reason_for_visit?". "+p.reason_for_visit:"");
-  list("story",b.story,function(li,it){withSrc(li,it.text,it.sources);});
+  list("story",b.story,function(li,it){withSrc(li,it.text,it.sources);},"story",pmap);
   var tb=$("meds");tb.textContent="";
-  (b.medications_actually_taking||[]).forEach(function(m){var tr=el("tr");
-    tr.appendChild(el("td",null,(m.drug||"")+(m.dose?" "+m.dose:"")));
+  (b.medications_actually_taking||[]).forEach(function(m,i){var tr=el("tr");
+    var n=el("td");n.appendChild(og(b));n.appendChild(document.createElement("br"));n.appendChild(document.createTextNode((m.drug||"")+(m.dose?" "+m.dose:"")));tr.appendChild(n);
     var s=el("td");s.appendChild(el("span","st "+(m.status||""),String(m.status||"").replace(/_/g," ")));tr.appendChild(s);
-    tr.appendChild(withSrc(el("td"),m.evidence||"",m.sources));tb.appendChild(tr);});
-  var a=$("allergy");a.textContent="";if(b.allergies)withSrc(a,b.allergies.text||"",b.allergies.sources);
-  list("tests",b.tests_already_done,function(li,it){withSrc(li,[it.test,it.date,it.result].filter(Boolean).join(" · "),it.sources);});
-  list("open",b.open_items_from_other_clinicians,function(li,it){withSrc(li,it.text,it.sources);});
-  list("nf",(b.not_found||[]).map(function(t){return {text:t};}),function(li,it){li.textContent=it.text;});
-  renderFlags();renderAudit();
+    var ev=withSrc(el("td"),m.evidence||"",m.sources);tr.appendChild(ev);
+    decorate(ev,"medications_actually_taking:"+i,m.evidence,pmap);if(ev.classList.contains("hasprob"))tr.classList.add("hasprob");
+    tb.appendChild(tr);});
+  if(!(b.medications_actually_taking||[]).length){var tr0=el("tr"),td0=el("td","logline","None listed.");tr0.appendChild(td0);tb.appendChild(tr0);}
+  var a=$("allergy");a.textContent="";if(b.allergies){a.appendChild(og(b));withSrc(a,b.allergies.text||"",b.allergies.sources);decorate(a,"allergies:0",b.allergies.text,pmap);}
+  list("tests",b.tests_already_done,function(li,it){withSrc(li,[it.test,it.date,it.result].filter(Boolean).join(" · "),it.sources);},"tests_already_done",pmap,function(it){return it.result||it.test;});
+  list("open",b.open_items_from_other_clinicians,function(li,it){withSrc(li,it.text,it.sources);},"open_items_from_other_clinicians",pmap);
+  list("nf",(b.not_found||[]).map(function(t){return {text:t};}),function(li,it){li.appendChild(document.createTextNode(it.text));});
+  renderFlags(pmap);renderAudit();renderChecks();renderInputs();renderRaw();
   var lg=$("log");lg.textContent="";
-  (st.log||[]).slice().reverse().forEach(function(e){
-    var txt=e.type==="decision"?(e.flag_id+" · "+(e.action==="accept"?"accepted":"dismissed")+" by "+e.by+(e.reason?" · "+e.reason:"")):(e.flag_id+" · marked "+e.status+" by "+e.by+(e.note?" · "+e.note:""));
+  (st.log||[]).slice().reverse().forEach(function(e){var txt;
+    if(e.type==="decision")txt=e.flag_id+" · "+(e.action==="accept"?"accepted":"dismissed")+" by "+e.by+(e.reason?" · "+e.reason:"");
+    else if(e.type==="patient_review")txt="patient answers "+(e.status==="approved"?"approved":e.status==="returned"?"sent back":e.status)+" by "+(e.by||"pharmacist")+(e.note?" · "+e.note:"");
+    else if(e.flag_id)txt=e.flag_id+" · marked "+e.status+" by "+e.by+(e.note?" · "+e.note:"");
+    else txt=(e.type||"event")+(e.detail?" · "+e.detail:"");
     lg.appendChild(el("li",null,when(e.at)+" · "+txt));});
   if(!(st.log||[]).length)lg.appendChild(el("li",null,"No decisions yet."));
   $("rolePharm").setAttribute("aria-pressed",S.role==="pharmacist");$("rolePhys").setAttribute("aria-pressed",S.role==="physician");
   $("rolePharm").disabled=!S.hasPharm;
 }
-function renderFlags(){
+function renderFlags(pmap){
   var box=$("flags"),b=S.brief,st=S.state;box.textContent="";
   var issues=b.medication_issues||[];
   $("flagsTitle").textContent="Medication issues to review ("+issues.length+")";
-  issues.forEach(function(f){
-    var d=st.decisions[f.id],v=st.verifications[f.id];
+  issues.forEach(function(f,i){
+    var d=(st.decisions||{})[f.id],v=(st.verifications||{})[f.id];
     var card=el("div","flag"+(d?" "+d.action:""));
-    card.appendChild(el("span","when",f.when==="before_visit"?"SORT OUT BEFORE THE VISIT":"DISCUSS AT THE VISIT"));
+    var top=el("div");top.appendChild(og(b));top.appendChild(el("span","when",f.when==="before_visit"?"SORT OUT BEFORE THE VISIT":"DISCUSS AT THE VISIT"));
+    decorate(top,"medication_issues:"+i,f.title,pmap);card.appendChild(top);
+    if(top.classList.contains("hasprob")){top.classList.remove("hasprob");card.classList.add("hasprob");}
     card.appendChild(el("b",null,f.title));
     card.appendChild(el("span",null,f.why_review));
     var sr=el("div");(f.sources||[]).forEach(function(s){var c=chip(s);c.style.marginLeft="0";c.style.marginRight="5px";sr.appendChild(c);});card.appendChild(sr);
@@ -146,13 +266,13 @@ function renderFlags(){
     card.appendChild(stamp);
     if(S.hasPharm&&v&&v.note)card.appendChild(el("span","logline","Pharmacist note: "+v.note));
     if(S.role==="pharmacist"&&S.hasPharm){
-      var row=el("div","row"),ta=el("textarea");ta.rows=2;ta.id="note-"+f.id;ta.placeholder="What you checked and found";ta.value=v?v.note:"";
+      var row=el("div","row"),ta=el("textarea");ta.rows=2;ta.id="note-"+f.id;ta.placeholder="What you checked and found";ta.setAttribute("aria-label","Pharmacist note for "+f.title);ta.value=v?v.note:"";
       var ok=el("button","act","Mark verified"),un=el("button","act","Mark unresolved");ok.type=un.type="button";
       ok.onclick=function(){verify(f.id,"verified",ta.value);};un.onclick=function(){verify(f.id,"unresolved",ta.value);};
       row.appendChild(ta);row.appendChild(ok);row.appendChild(un);card.appendChild(row);
     }else if(S.role==="physician"){
       if(d){card.appendChild(el("span","logline",(d.action==="accept"?"Accepted":"Dismissed")+" by "+d.by+", "+when(d.at)+(d.reason?": "+d.reason:"")));}
-      var r2=el("div","row"),inp=el("input");inp.type="text";inp.id="reason-"+f.id;inp.placeholder="Reason (needed to dismiss)";
+      var r2=el("div","row"),inp=el("input");inp.type="text";inp.id="reason-"+f.id;inp.placeholder="Reason (needed to dismiss)";inp.setAttribute("aria-label","Reason for "+f.title);
       var ac=el("button","act",d?"Change to accept":"Accept"),di=el("button","act",d?"Change to dismiss":"Dismiss");ac.type=di.type="button";
       ac.onclick=function(){decide(f.id,"accept",inp.value);};di.onclick=function(){decide(f.id,"dismiss",inp.value);};
       r2.appendChild(inp);r2.appendChild(ac);r2.appendChild(di);card.appendChild(r2);
@@ -162,23 +282,132 @@ function renderFlags(){
   if(!issues.length)box.appendChild(el("span","logline","No medication issues raised."));
 }
 function renderAudit(){
-  var a=S.audit;$("auditBox").hidden=!a;if(!a)return;var box=$("audit");box.textContent="";
+  var a=S.audit;$("auditBox").hidden=!a;var inl=$("auditInline");inl.textContent="";if(!a)return;var box=$("audit");box.textContent="";
   var u=a.unsupported||[],m=a.missing||[];
-  box.appendChild(el("p",null,u.length+" statement"+(u.length===1?"":"s")+" not supported by the cited source. "+m.length+" fact"+(m.length===1?"":"s")+" the brief left out."));
-  var ul=el("ul");u.forEach(function(x){ul.appendChild(el("li",null,"Not supported: "+x.text+(x.problem?" ("+x.problem+")":"")));});
+  var summary=u.length+" statement"+(u.length===1?"":"s")+" not supported by the cited source. "+m.length+" fact"+(m.length===1?"":"s")+" the brief left out.";
+  box.appendChild(el("p",null,summary));
+  var ul=el("ul");u.forEach(function(x){var li=el("li",null,"Not supported: "+x.text+(x.problem?" ("+x.problem+")":""));(x.cited||[]).forEach(function(c){li.appendChild(chip(c));});ul.appendChild(li);});
   m.forEach(function(x){withSrc(ul.appendChild(el("li")),"Left out: "+x.text,x.sources);});box.appendChild(ul);
+  var h=el("h3",null,"Second-pass audit");inl.appendChild(h);
+  var p=el("p",(u.length||m.length)?"warnitem":"okitem",summary+((u.length||m.length)?" Details below the brief; unsupported lines are marked.":""));p.style.margin="4px 0 0";inl.appendChild(p);
 }
+function renderChecks(){
+  var ul=$("checks");ul.textContent="";var b=S.brief,ps=b.validation_problems;
+  if(!Array.isArray(ps)){ul.appendChild(el("li","logline","The server did not report automatic checks for this brief."));return;}
+  if(!ps.length){var n=(b.medication_issues||[]).length;
+    ul.appendChild(el("li","okitem","All automatic checks passed: every line has a source, "+n+" medication issue"+(n===1?"":"s")+" (cap 6), no order-like wording."));return;}
+  ul.appendChild(el("li",null,ps.length+" automatic check"+(ps.length===1?"":"s")+" failed. Affected lines are outlined in yellow."));
+  ps.forEach(function(p){var li=el("li","warnitem");li.appendChild(document.createTextNode(plainProblem(p)+" "));li.appendChild(el("span","code","("+p+")"));ul.appendChild(li);});
+}
+function renderInputs(){
+  var ul=$("inputs");ul.textContent="";
+  if(!S.inputs.length){ul.appendChild(el("li","logline","The server did not list its inputs."));return;}
+  S.inputs.forEach(function(x){var li=el("li");
+    var a=el("a",null,x.name);a.href=x.url;a.target="_blank";a.rel="noopener";li.appendChild(a);
+    li.appendChild(el("span","kind",x.kind));li.appendChild(el("span","inv","invented data"));
+    if(x.kind==="patient"){var ap=!!x.approved;li.appendChild(el("span","appr "+(ap?"yes":"no"),ap?"approved · sent to the model":"not approved · not sent"));}
+    ul.appendChild(li);});
+}
+function renderRaw(){
+  var box=$("raw");box.textContent="";var r=S.raw||{},names={prompt:"Prompt sent",response:"Raw model reply",brief:"Parsed brief (JSON)",audit:"Audit (JSON)"},any=false;
+  ["prompt","response","brief","audit"].forEach(function(k){if(!r[k])return;any=true;var a=el("a",null,names[k]+" ↗");a.href=r[k];a.target="_blank";a.rel="noopener";a.title=r[k];box.appendChild(a);});
+  if(!any)box.appendChild(el("span","logline","No raw files yet. They appear after a model run."));
+}
+
+/* ---------- banners ---------- */
+function banner(kind,title,body){var bx=$("bannerBox");bx.textContent="";if(!kind){bx.hidden=true;return;}
+  var d=el("div","banner "+kind);d.setAttribute("role",kind==="bad"?"alert":"status");d.appendChild(el("b",null,title));if(body)d.appendChild(el("span",null,body));bx.appendChild(d);bx.hidden=false;}
+function whatShown(b){var o=originOf(b);
+  if(o==="saved")return "Now showing the brief SAVED from an earlier model run"+(b.generated_at?" ("+when(b.generated_at)+")":"")+". It is real model output, but not from this run.";
+  if(o==="live")return "Now showing LIVE model output.";
+  return "Now showing the HAND-WRITTEN SAMPLE brief. It is not model output.";}
+
+/* ---------- live run over SSE (POST, so fetch + ReadableStream) ---------- */
+var L=null;
+function setTimer(){if(!L)return;var t=(Date.now()-L.t0)/1000,lim=L.timeout||60;
+  $("timer").innerHTML="";$("timer").appendChild(document.createTextNode(t.toFixed(1)));var sm=el("small",null," / "+lim+" s");$("timer").appendChild(sm);
+  var pct=Math.min(100,100*t/lim);$("bar").firstChild.style.width=pct+"%";$("bar").classList.toggle("late",t>lim*0.75);
+  if(!L.finished&&Date.now()-L.lastEvent>(lim+5)*1000){finishLive("guard",{detail:"No message from the server for "+(lim+5)+" s."});}}
+function liveStatus(t){$("liveStatus").textContent=t;}
+async function runLive(){
+  if(S.running)return;S.running=true;
+  var before=S.brief;
+  L={t0:Date.now(),lastEvent:Date.now(),timeout:60,ctrl:new AbortController(),finished:false,chars:0,deltas:0,before:before};
+  $("liveBox").hidden=false;$("stream").textContent="";$("liveMeta").textContent="";banner(null);
+  $("live").disabled=true;$("live").textContent="Running live…";$("stop").hidden=false;
+  liveStatus("Sending the records to the model…");
+  L.tick=setInterval(setTimer,100);setTimer();
+  var myL=L;
+  try{
+    var r=await fetch("/api/generate/stream",{method:"POST",headers:{"Content-Type":"application/json","Accept":"text/event-stream"},body:"{}",signal:myL.ctrl.signal});
+    if(!r.ok||!r.body){var j=await r.json().catch(function(){return {};});throw new Error((typeof j.detail==="string"&&j.detail)||("Server answered "+r.status));}
+    var reader=r.body.getReader(),dec=new TextDecoder(),buf="";
+    while(true){
+      var c=await reader.read();if(c.done)break;
+      buf+=dec.decode(c.value,{stream:true}).replace(/\r\n?/g,"\n");
+      var i;while((i=buf.indexOf("\n\n"))>=0){var raw=buf.slice(0,i);buf=buf.slice(i+2);handleEvent(myL,raw);if(myL.finished)break;}
+      if(myL.finished)break;
+    }
+    if(buf.trim()&&!myL.finished)handleEvent(myL,buf);
+    if(!myL.finished)finishLive("error",{detail:"The stream ended before the model finished the brief."});
+    try{reader.cancel().catch(function(){});}catch(e){}
+  }catch(e){
+    if(!myL.finished)finishLive("error",{detail:e&&e.name==="AbortError"?"Stopped.":String(e&&e.message||e)});
+  }
+}
+function handleEvent(myL,raw){
+  if(myL!==L||myL.finished)return;
+  var ev="message",data=[];raw.split("\n").forEach(function(line){if(!line||line[0]===":")return;var k=line.indexOf(":"),f=k<0?line:line.slice(0,k),v=k<0?"":line.slice(k+1);if(v[0]===" ")v=v.slice(1);
+    if(f==="event")ev=v;else if(f==="data")data.push(v);});
+  myL.lastEvent=Date.now();
+  if(!data.length&&ev==="message")return; // keep-alive comment
+  var d={};try{d=JSON.parse(data.join("\n")||"{}");}catch(e){d={text:data.join("\n")};}
+  if(ev==="start"){if(d.timeout_s)myL.timeout=+d.timeout_s;
+    liveStatus("Model is reading the records…");
+    $("liveMeta").textContent="model: "+(d.model||"?")+" · timeout: "+myL.timeout+" s · sources: "+(d.sources||[]).join(", ");}
+  else if(ev==="delta"){var t=d.text||"";myL.chars+=t.length;myL.deltas++;var pre=$("stream");var atBottom=pre.scrollHeight-pre.scrollTop-pre.clientHeight<40;
+    pre.appendChild(document.createTextNode(t));if(atBottom)pre.scrollTop=pre.scrollHeight;
+    liveStatus("Model is writing… "+myL.chars.toLocaleString()+" characters so far");}
+  else if(ev==="done")finishLive("done",d);
+  else if(ev==="error")finishLive("error",d);
+  else if(ev==="timeout")finishLive("timeout",d);
+}
+function finishLive(kind,d){
+  var myL=L;if(!myL||myL.finished)return;myL.finished=true;clearInterval(myL.tick);setTimer();
+  var secs=((Date.now()-myL.t0)/1000).toFixed(1);
+  if(kind==="guard"){try{myL.ctrl.abort();}catch(e){}} // stop reading a stalled stream
+  S.running=false;$("live").disabled=false;$("live").textContent="Run live on the records";$("stop").hidden=true;
+  if(kind==="done"&&d.brief){
+    S.brief=d.brief;if(!S.brief.origin)S.brief.origin="live";S.audit=null;
+    liveStatus("Finished in "+secs+" s. "+myL.chars.toLocaleString()+" characters written.");
+    banner("good","Live run finished in "+secs+" s","The brief below is LIVE model output from this run. Every line still needs a person to check it.");
+    // any saved audit was for the earlier brief, so drop it until "Check against sources" is pressed again
+    render();refreshMeta().then(function(){S.audit=null;render();});return;
+  }
+  var fb=d&&d.fallback,shown;
+  if(fb){S.brief=fb;}else{S.brief=myL.before;}
+  shown=S.brief;
+  var title=kind==="timeout"?"The live call stalled: no complete brief after "+(myL.timeout)+" s":
+            kind==="guard"?"The live call stalled: the server went quiet, so the page stopped waiting":
+            "The live call failed";
+  var detail=whatShown(shown)+(d&&d.detail?" (Server said: "+d.detail+")":"");
+  liveStatus((kind==="done"?"Finished without a brief":"Stopped")+" after "+secs+" s.");
+  banner("bad",title,detail);
+  render();refreshMeta().then(render);
+}
+$("stop").onclick=function(){finishLive("guard",{detail:"Stopped by the presenter."});};
+
+/* ---------- other actions ---------- */
 async function verify(id,status,note){try{S.state=await api("/api/verify",{flag_id:id,status:status,note:note,by:"Pharmacist"});render();}catch(e){}}
 async function decide(id,action,reason){try{S.state=await api("/api/decision",{flag_id:id,action:action,reason:reason,by:"Clara"});render();}catch(e){}}
 $("rolePharm").onclick=function(){S.role="pharmacist";render();};
 $("rolePhys").onclick=function(){S.role="physician";render();};
 $("hasPharm").onchange=function(e){S.hasPharm=e.target.checked;if(!S.hasPharm)S.role="physician";render();};
-$("reset").onclick=async function(){S.state=await api("/api/reset",{});render();};
-$("gen").onclick=async function(){var b=$("gen");b.disabled=true;b.textContent="Reading the records…";
-  try{await api("/api/generate",{});await load();}catch(e){}finally{b.disabled=false;b.textContent="Run on the records";}};
+$("reset").onclick=async function(){try{S.state=await api("/api/reset",{});render();}catch(e){}};
+$("live").onclick=runLive;
 $("aud").onclick=async function(){var b=$("aud");b.disabled=true;b.textContent="Checking…";
-  try{var j=await api("/api/audit",{});S.audit=j.audit;render();}catch(e){}finally{b.disabled=false;b.textContent="Check against sources";}};
-load();
+  try{var j=await api("/api/audit",{});S.audit=j.audit;await refreshMeta();S.audit=j.audit;render();}catch(e){}finally{b.disabled=false;b.textContent="Check against sources";}};
+load().catch(function(){});
 </script>
 </body>
 </html>
