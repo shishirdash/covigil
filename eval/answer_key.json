@@ -1,0 +1,18 @@
+{
+  "_note": "Machine-readable version of answer_key.md, for eval/score.py. Never pass this to the model. Matching is by keyword, so read the result next to the brief.",
+  "findings": [
+    {"id": 1, "name": "ACE inhibitor and ARB both taken", "where": "medication_issues", "all_of": ["lisinopril", "losartan"]},
+    {"id": 2, "name": "OTC naproxen with kidney disease", "where": "medication_issues", "all_of": ["naproxen|aleve|nsaid"]},
+    {"id": 3, "name": "Metformin dose vs eGFR", "where": "medication_issues", "all_of": ["metformin"]},
+    {"id": 4, "name": "Drugs that may explain the fall", "where": "medication_issues", "all_of": ["tamsulosin", "orthostatic|dizz|standing|lighthead|fall|hypotension"]},
+    {"id": 5, "name": "Apixaban lapse", "where": "medication_issues", "all_of": ["apixaban|anticoagula|blood thinner"]},
+    {"id": 6, "name": "Penicillin allergy conflict", "where": "anywhere", "all_of": ["penicillin"]},
+    {"id": 7, "name": "Workup already done", "where": "tests_already_done", "all_of": ["\\bct\\b|head scan|computed tomography", "echo|lvef|ultrasound"]}
+  ],
+  "traps": [
+    {"id": "A", "name": "Hydrochlorothiazide (correctly stopped)", "title_matches": "hydrochlorothiazide|hctz|thiazide"},
+    {"id": "B", "name": "Atorvastatin (no gap)", "title_matches": "atorvastatin|statin"},
+    {"id": "C", "name": "Pharmacy change (explained by the move)", "title_matches": "pharmac(y|ies).*(change|transfer|switch|two)|two pharmac"},
+    {"id": "D", "name": "Two prescribers (expected)", "title_matches": "prescriber"}
+  ]
+}
