@@ -18,7 +18,7 @@ from .schema import validate_brief
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 OUT = ROOT / "out"
-MODEL = os.environ.get("COVIGIL_MODEL", "claude-fable-5-2")
+MODEL = os.environ.get("COVIGIL_MODEL", "claude-opus-5-5")
 VISIT_DATE = "2026-11-23"
 
 AUDIT_SYSTEM = """You audit a pre-visit brief written by other software. You are software and you do not diagnose.

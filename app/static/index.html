@@ -3,156 +3,351 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CoVigil</title>
+<title>CoVigil · Medication review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* Design rule: the page is about the patient and what the clinician must decide.
-   How the software made it is one click away ("How this brief was made"), never in the way. */
-:root{--bg:#f3f1ec;--card:#fffdf9;--ink:#1b1f26;--muted:#5b6472;--line:#ddd8cd;--accent:#1f4fbf;--soft:#e7edfb;
-  --now:#b5471b;--nowbg:#fdf0e8;--later:#3b5b8c;--ok:#22704a;--okbg:#e8f4ed;--risk:#b4541f;--sample:#a3241d;--samplebg:#fdecea;--warnbg:#fff4d6;--live:#22704a}
+/* Design rule: the page answers two questions, in this order.
+   1. What is he actually taking? (medication reconciliation, every source side by side)
+   2. What needs a decision? (one card per issue: why, what the pharmacist found, sources, decide with a reason)
+   Everything else is context and sits below. Status is never shown by colour alone: every state has a word and an icon.
+   Type is sized to be read at arm's length: body 17-18px, nothing under 14px. */
+:root{
+  --bg:#F7F8FA;--card:#FFFFFF;--sunk:#F6F7F9;--ink:#17202B;--ink2:#2E3A48;--muted:#5A6472;--faint:#8A93A0;
+  --line:#DFE3EA;--line-soft:#ECEFF3;
+  --accent:#2A44B0;--accent-ink:#1E3291;--accent-soft:#E7EBFA;
+  --now:#B42318;--nowbg:#FDECEA;--nowline:#F1B8B1;
+  --later:#9A5300;--laterbg:#FEF2DD;--laterline:#EFCB8F;
+  --ok:#1E7A4C;--okbg:#E3F3EA;--okline:#A8D5BC;
+  --rx:#5B3FA0;--rxbg:#EFEAF9;
+  --sample:#A3241D;--samplebg:#FDECEA;--warnbg:#FFF6DB;--warnline:#E6C56A;
+  --mark:#FFE27A;
+  --serif:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --shadow:none;
+  --r:14px;
+}
+body.role-pharm{--accent:#5B3FA0;--accent-ink:#45307C;--accent-soft:#EFEAF9}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{background:var(--card);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;position:sticky;top:0;z-index:2}
-header b{font-size:19px}
-header .sp{flex:1}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{border:0;background:var(--card);padding:7px 13px;font:inherit;font-size:15px;cursor:pointer;color:var(--ink)}
-.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
-.seg button:disabled{color:var(--muted);cursor:not-allowed}
-.viewing{font-size:14px;color:var(--muted)}
-button.act,a.act{font:inherit;font-size:15px;padding:7px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
-button.act:hover,a.act:hover{border-color:var(--accent);color:var(--accent)}
-button.act:disabled{opacity:.55;cursor:not-allowed}
-button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
-button.primary:hover{background:#173d99;color:#fff}
-button.yes{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:600}
-button.yes:hover{background:#185337;color:#fff}
-button.link{border:0;background:none;color:var(--accent);font:inherit;font-size:14px;cursor:pointer;padding:0;text-decoration:underline}
-button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-main{max-width:900px;margin:0 auto;padding:22px 20px 60px;display:flex;flex-direction:column;gap:26px}
-h1{font:500 clamp(28px,4.5vw,38px)/1.12 Georgia,"Times New Roman",serif;margin:0;text-wrap:balance}
-h2{font:500 24px/1.2 Georgia,"Times New Roman",serif;margin:0}
-h3{margin:0;font-size:16px;font-weight:650}
-p{margin:0}
-.sub{color:var(--muted);font-size:16px}
-.hero{display:flex;flex-direction:column;gap:10px}
-.visit{font-size:19px}
-/* one provenance line for the whole brief, instead of a badge on every line */
-.prov{border-radius:10px;padding:11px 14px;font-size:15.5px;border:1px solid var(--line);background:var(--card)}
-.prov b{font-weight:650}
-.prov.sample{background:var(--samplebg);border-color:#e9a39d;color:#5d130f}
-.prov.live{background:var(--okbg);border-color:#a9d3bb;color:#0f3d26}
+html{scroll-padding-top:90px;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:17.5px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---------- top bar ---------- */
+header.bar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1240px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:9px;font:600 21px/1 var(--serif);margin-right:6px}
+.logo svg{width:28px;height:28px}
+.seg{display:inline-flex;padding:3px;background:var(--line-soft);border-radius:10px;gap:2px}
+.seg button{border:0;background:transparent;padding:7px 13px;border-radius:8px;font-size:15.5px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:8px}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg button:disabled{opacity:.45;cursor:not-allowed}
+.sp{flex:1}
+.av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font:600 11px/1 var(--sans);color:#fff;flex:none}
+.av.clara{background:#2A44B0}.av.rx{background:var(--rx)}.av.pt{background:#8A6D3B}
+.btn{border:1px solid var(--line);background:var(--card);padding:10px 18px;border-radius:10px;font-size:16.5px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:background .15s,border-color .15s}
+.btn:hover{border-color:#B9C0CC;background:var(--sunk)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.primary:hover{background:#000}
+.btn.yes{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.yes:hover{background:#155C38}
+.btn.rxbtn{background:var(--rx);border-color:var(--rx);color:#fff}
+.btn.small{padding:7px 12px;font-size:15px}
+.link{border:0;background:none;color:var(--accent);font-size:15.5px;padding:0;text-decoration:underline;cursor:pointer}
+.err{color:var(--now);font-size:15px;font-weight:500}
+
+/* ---------- page ---------- */
+main{max-width:1240px;margin:0 auto;padding:28px 24px 80px;display:flex;flex-direction:column;gap:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px 24px}
+.sechead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 18px;margin:12px 0 12px}
+.sechead h2{font:600 24px/1.2 var(--serif);letter-spacing:-.01em}
+.sechead .step{display:block;font:600 13.5px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.sub{color:var(--muted);font-size:16.5px;max-width:70ch}
+.card h3{font:600 21px/1.25 var(--serif);margin-bottom:10px}
+
+/* patient header */
+.pthead{display:grid;grid-template-columns:1fr auto;gap:10px 28px;align-items:start}
+.pthead .who{font-size:15.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.pthead h1{font:600 clamp(28px,3.6vw,38px)/1.15 var(--serif);letter-spacing:-.015em;margin:4px 0 4px}
+.pthead .visit{font-size:18px;color:var(--ink2)}
+.tally{display:flex;gap:10px;flex-wrap:wrap}
+.tal{min-width:120px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--sunk)}
+.tal b{display:block;font:600 28px/1.1 var(--serif)}
+.tal span{font-size:14.5px;color:var(--muted)}
+.tal.hot{background:var(--nowbg);border-color:var(--nowline)}.tal.hot b,.tal.hot span{color:var(--now)}
+.pthead .row2{grid-column:1/-1;display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.allergy{display:flex;gap:12px;align-items:flex-start;background:var(--nowbg);border:1px solid var(--nowline);border-radius:10px;padding:11px 14px;font-size:17px}
+.allergy .ic{flex:none;width:26px;height:26px;border-radius:50%;background:var(--now);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px}
+.allergy .lab{color:var(--now);font-weight:700}
+.prov{font-size:15.5px;color:var(--muted);display:flex;gap:10px;align-items:flex-start}
+.prov .tag{flex:none;font:600 13px/1.4 var(--sans);letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);background:var(--sunk);margin-top:2px}
+.prov.sample .tag{background:var(--samplebg);border-color:#E9A39D;color:var(--sample)}
+.prov.live .tag,.prov.saved .tag{background:var(--okbg);border-color:var(--okline);color:var(--ok)}
 .nudge{font-size:15.5px;color:var(--muted)}
-.nudge a{color:var(--accent)}
-.banner{border-radius:10px;padding:12px 14px;font-size:16px;border:2px solid}
-.banner b{display:block;font-size:18px;margin-bottom:2px}
-.banner.bad{background:var(--samplebg);border-color:var(--sample);color:#5d130f}
-.banner.good{background:var(--okbg);border-color:var(--live);color:#0f3d26}
-.warnstrip{background:var(--warnbg);border:1px solid #e6c56a;color:#4a3200;border-radius:10px;padding:10px 14px;font-size:15.5px}
-.sec{display:flex;flex-direction:column;gap:12px}
-.progress{font-size:15.5px;color:var(--muted)}
-.group{font:650 14px/1.2 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
-.group.now{color:var(--now)}.group.later{color:var(--later)}
-.flag{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--now);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:9px}
-.flag.later{border-left-color:var(--later)}
-.flag.accept{border-left-color:var(--ok)}
-.flag.dismiss{border-left-color:var(--line)}
-.flag .title{font-size:20px;font-weight:650;line-height:1.3}
-.flag.done{padding:11px 18px;gap:4px}.flag.done .title{font-size:17px}
-.flag.dismiss .title{color:var(--muted);text-decoration:line-through}
-.why{font-size:17px}
-.from{font-size:14.5px;color:var(--muted)}
-.pharm{font-size:15px;color:var(--muted)}
-.pharm.verified{color:var(--ok)}.pharm.unresolved{color:var(--risk)}
-.outcome{font-size:15.5px}
-.outcome.accept{color:var(--ok);font-weight:600}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-input[type=text],textarea{font:inherit;font-size:16px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink);flex:1;min-width:200px}
-/* sources: plain words, not codes */
-.src{font-size:13.5px;color:var(--accent);background:var(--soft);border-radius:999px;padding:2px 10px;white-space:nowrap;margin:0 5px 3px 0;text-decoration:none;display:inline-block}
-a.src:hover{text-decoration:underline}
-span.src{color:#3a4660;background:#eceae4}
-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-ul.plain li{padding-left:16px;position:relative}
-ul.plain li::before{content:"";position:absolute;left:0;top:.68em;width:6px;height:6px;border-radius:50%;background:var(--muted)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
-table{border-collapse:collapse;width:100%;font-size:16px}
-td{padding:9px 8px 9px 0;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
-tr:last-child td{border-bottom:0}
-td.med{font-weight:600;width:30%}
-.st{font-size:13.5px;font-weight:650;border-radius:999px;padding:2px 10px;white-space:nowrap;background:var(--okbg);color:var(--ok)}
-.st.probably_not_taking,.st.unclear{background:var(--nowbg);color:var(--now)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media (max-width:760px){.two{grid-template-columns:1fr}td.med{width:auto}}
-.mark{display:inline-block;font:650 12.5px/1.3 system-ui,sans-serif;border-radius:4px;padding:1px 7px;margin-left:6px;background:var(--warnbg);color:#4a3200;border:1px solid #e6c56a;white-space:nowrap}
-.mark.audit{background:var(--samplebg);color:#5d130f;border-color:#e9a39d}
-.hasprob{outline:2px dashed #d9a520;outline-offset:3px;border-radius:4px}
-.logline{font-size:14.5px;color:var(--muted)}
-.err{color:var(--risk);font-size:14px}
+.nudge a{color:var(--accent);font-weight:600}
+@media (max-width:860px){.pthead{grid-template-columns:1fr}}
+
+.banner{border-radius:12px;padding:14px 18px;font-size:17px;border:2px solid}
+.banner b{display:block;font-size:18.5px;margin-bottom:2px}
+.banner.bad{background:var(--samplebg);border-color:var(--sample);color:#5D130F}
+.warnstrip{background:var(--warnbg);border:1px solid var(--warnline);color:#4A3200;border-radius:12px;padding:12px 16px;font-size:16.5px}
+
 /* live run */
-.liveTop{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
-.timer{font:700 40px/1 ui-monospace,Menlo,monospace;letter-spacing:-.02em;min-width:5.5ch}
+.liveTop{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.timer{font:600 40px/1 var(--mono);letter-spacing:-.02em;min-width:5.5ch}
 .timer small{font-size:18px;color:var(--muted);font-weight:500}
-.bar{flex:1;min-width:200px;height:12px;background:#e3dfd6;border-radius:6px;overflow:hidden}
-.bar>div{height:100%;width:0;background:var(--live);transition:width .2s linear}
-.bar.late>div{background:var(--risk)}
-.livestatus{font-size:18px;font-weight:600}
-.liveMeta{font:12.5px ui-monospace,Menlo,monospace;color:var(--muted)}
-pre.stream{margin:8px 0 0;background:#10141b;color:#d7f7df;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;border-radius:8px;padding:12px;height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word}
-pre.stream:empty::before{content:"(nothing written yet)";color:#7d8796}
+.lbar{flex:1;min-width:200px;height:12px;background:var(--line-soft);border-radius:8px;overflow:hidden}
+.lbar>div{height:100%;width:0;background:var(--ok);transition:width .2s linear}
+.lbar.late>div{background:var(--later)}
+.livestatus{font-size:18.5px;font-weight:600;margin-top:10px}
+.liveMeta{font:14px var(--mono);color:var(--muted)}
+pre.stream{margin:10px 0 0;background:#10161D;color:#D7F7DF;font:14px/1.5 var(--mono);border-radius:10px;padding:14px;height:240px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+pre.stream:empty::before{content:"(nothing written yet)";color:#7D8796}
+summary{cursor:pointer}
+
+/* ---------- 1. medication reconciliation ---------- */
+.recwrap{padding:0;overflow:hidden}
+.reckey{display:flex;gap:8px 20px;flex-wrap:wrap;padding:14px 22px;border-bottom:1px solid var(--line);font-size:15px;color:var(--muted);background:var(--sunk)}
+.reckey span{display:inline-flex;align-items:center;gap:7px}
+table.rec{border-collapse:collapse;width:100%}
+table.rec th{font:600 13.5px/1.3 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:bottom}
+table.rec th:first-child,table.rec td:first-child{padding-left:22px}
+table.rec th:last-child,table.rec td:last-child{padding-right:22px}
+table.rec td{padding:14px;border-top:1px solid var(--line-soft);vertical-align:top;font-size:16px}
+table.rec tbody tr:first-child td{border-top:0}
+table.rec tr.attn td:first-child{box-shadow:inset 5px 0 0 var(--now)}
+table.rec tr.attn.soon td:first-child{box-shadow:inset 5px 0 0 var(--later)}
+table.rec tr.grp td{background:var(--sunk);font:600 13.5px/1.2 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding-top:10px;padding-bottom:10px}
+table.rec tr.old td{color:var(--muted)}
+.mname{font-weight:700;font-size:17.5px;color:var(--ink)}
+.mdose{color:var(--muted);font-size:15.5px;margin-left:8px;white-space:nowrap}
+.mev{display:block;margin-top:6px;font-size:15.5px;color:var(--ink2);max-width:36ch}
+.cell{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.cell .no{color:var(--faint)}
+.cell .bad{color:var(--now);font-weight:600}
+.cell .warn{color:var(--later);font-weight:600}
+.cell .fine{color:var(--ok)}
+.cell .sm{font-size:14.5px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 14.5px/1.2 var(--sans);border-radius:999px;padding:5px 11px;white-space:nowrap;border:1px solid}
+.pill.taking{background:var(--okbg);border-color:var(--okline);color:var(--ok)}
+.pill.not{background:var(--nowbg);border-color:var(--nowline);color:var(--now)}
+.pill.unclear{background:var(--laterbg);border-color:var(--laterline);color:var(--later)}
+.pill.off{background:var(--sunk);border-color:var(--line);color:var(--muted)}
+a.issue{display:inline-flex;align-items:flex-start;gap:6px;color:var(--ink);text-decoration:none;font-size:15px;line-height:1.35;border:1px solid var(--line);border-radius:8px;padding:5px 9px;background:var(--card);margin:0 0 6px}
+a.issue:hover{border-color:var(--accent);color:var(--accent-ink)}
+a.issue .u{font-weight:700;white-space:nowrap}
+a.issue.now .u{color:var(--now)}a.issue.later .u{color:var(--later)}
+a.issue.done{color:var(--muted)}
+@media (max-width:900px){
+  table.rec thead{display:none}
+  table.rec,table.rec tbody,table.rec tr,table.rec td{display:block;width:100%}
+  table.rec tr{border-top:1px solid var(--line);padding:12px 16px}
+  table.rec tr.grp{padding:0}
+  table.rec td,table.rec th:first-child,table.rec td:first-child{padding:4px 0 4px 0;border:0}
+  table.rec td[data-l]::before{content:attr(data-l);display:block;font:600 12.5px/1.4 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-top:6px}
+  table.rec tr.attn td:first-child,table.rec tr.attn.soon td:first-child{box-shadow:none}
+  table.rec tr.attn{box-shadow:inset 5px 0 0 var(--now)}table.rec tr.attn.soon{box-shadow:inset 5px 0 0 var(--later)}
+  table.rec tr.grp td{padding:10px 16px}
+}
+
+nav.tabs{display:flex;gap:4px}
+nav.tabs a{padding:6px 12px;border-radius:8px;text-decoration:none;color:var(--muted);font-weight:500;font-size:15.5px}
+nav.tabs a[aria-current]{background:var(--accent-soft);color:var(--accent)}
+a.golink{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--now);border-radius:var(--r);padding:16px 22px;text-decoration:none;color:var(--ink)}
+a.golink:hover{border-color:var(--accent)}
+a.golink b{font:600 21px/1.3 var(--serif)}
+a.golink .go{margin-left:auto;color:var(--accent);font-weight:600}
+a.golink.clear{border-left-color:var(--ok)}
+/* ---------- 2. issues to review ---------- */
+.progress{font-size:16.5px;color:var(--muted)}
+.flags{display:flex;flex-direction:column;gap:18px}
+.flag{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--now);border-radius:var(--r);box-shadow:var(--shadow);padding:22px 28px 18px}
+.flag.later{border-top-color:var(--later)}
+.flag.accept{border-top-color:var(--ok)}
+.flag.dismiss{border-top-color:#9AA3AF}
+.flag .title{font:600 25px/1.25 var(--serif);letter-spacing:-.01em}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}
+.badge{display:inline-flex;align-items:center;gap:6px;font:500 14.5px/1.3 var(--mono);border:1.5px solid;border-radius:7px;padding:3px 10px;white-space:nowrap}
+.badge.now{color:var(--now);border-color:var(--nowline);background:var(--nowbg)}
+.badge.later{color:var(--later);border-color:var(--laterline);background:var(--laterbg)}
+.badge.ok{color:var(--ok);border-color:#7FC09D;background:#fff}
+.badge.warn{color:var(--later);border-color:var(--laterline);background:#fff}
+.badge.wait{color:var(--muted);border-color:var(--line);border-style:dashed;background:#fff}
+dl.facts{margin:6px 0 0;display:grid;grid-template-columns:minmax(150px,240px) 1fr}
+dl.facts dt,dl.facts dd{margin:0;padding:15px 0;border-top:1px solid var(--line)}
+dl.facts dt{font:700 14px/1.5 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-right:20px}
+dl.facts dd{font-size:18px;line-height:1.6;color:var(--ink)}
+dl.facts dd.none{color:var(--faint)}
+@media (max-width:700px){dl.facts{grid-template-columns:1fr}dl.facts dt{padding-bottom:0}dl.facts dd{border-top:0;padding-top:4px}}
+.decide{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:16px;border-top:1px solid var(--line)}
+.decide input[type=text]{flex:1;min-width:220px}
+.decide textarea{flex-basis:100%}
+.fine-print{font-size:15px;color:var(--muted);margin-top:12px}
+input[type=text],textarea{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--sunk);font-size:17px}
+input[type=text]:focus,textarea:focus{background:#fff}
+input.need{border-color:var(--now);background:#fff}
+textarea{width:100%}
+.flag.done{box-shadow:none;background:var(--sunk);padding:14px 24px;border-top-width:4px}
+.flag.done .title{font-size:19.5px}
+.flag.dismiss .title{color:var(--muted)}
+.outcome{font-size:16.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px}
+.outcome.accept{color:var(--ok);font-weight:600}
+.outcome.dismiss{color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.plan{background:var(--okbg);border:1px solid var(--okline);border-radius:var(--r);padding:16px 20px;margin-top:18px}
+.plan h3{font:600 21px/1.2 var(--serif);display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;color:#0F3D26}
+.plan ol{margin:0;padding-left:22px;font-size:17px}
+.plan li{margin:4px 0}
+.allclear{background:var(--card);border:1px solid var(--okline);border-radius:var(--r);padding:18px 22px;color:var(--ok);font-weight:600}
+
+/* source chips: short, mono, outlined; each opens the source beside the page */
+.src{display:inline-flex;align-items:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:1px;margin:0 6px 6px 0;padding:3px 10px;border-radius:6px;border:1px solid #C9D1EE;background:#F7F8FE;color:var(--accent-ink);font:500 14.5px/1.4 var(--mono);transition:border-color .12s,background .12s}
+.src:hover{border-color:var(--accent);background:var(--accent-soft)}
+.src.on{background:var(--mark);border-color:#D9B92A;color:var(--ink)}
+.mark{display:inline-block;font:600 13.5px/1.3 var(--sans);border-radius:6px;padding:2px 8px;margin-left:6px;background:var(--warnbg);color:#4A3200;border:1px solid var(--warnline);white-space:nowrap}
+.mark.audit{background:var(--samplebg);color:#5D130F;border-color:#E9A39D}
+.hasprob{outline:2px dashed #D9A520;outline-offset:4px;border-radius:6px}
+
+/* ---------- 3. more context ---------- */
+.ctxhead{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
+.glance #glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.chartcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px 20px}
+.chartcard h3{font:600 14px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.chartcard .big{font:600 28px/1.15 var(--serif);margin:6px 0 2px}
+.chartcard .big small{font:500 15.5px var(--sans);color:var(--muted)}
+.chartcard .note{font-size:15px;color:var(--muted);margin-top:6px}
+.chartcard svg{display:block;width:100%;height:auto;margin-top:10px}
+.pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:7px;margin-top:12px}
+.pages button{height:50px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);font:600 15px/1 var(--mono);color:var(--faint);position:relative}
+.pages button.cited{background:var(--card);color:var(--ink);border-color:#B9C0CC;box-shadow:inset 0 -5px 0 var(--accent)}
+.pages button span{position:absolute;top:3px;right:5px;font:600 10.5px/1 var(--sans);color:var(--accent)}
+.hbars .r{display:grid;grid-template-columns:120px 1fr 34px;gap:10px;align-items:center;font-size:15.5px;margin-top:9px}
+.hbars .t{height:14px;border-radius:7px;background:var(--line-soft);overflow:hidden}
+.hbars .t i{display:block;height:100%;border-radius:7px}
+.hbars b{text-align:right;font-weight:600}
+.tl svg{display:block;width:100%;height:auto}
+.tl .crow{cursor:pointer}
+.tl .crow:hover .hov,.tl .crow:focus .hov{fill:rgba(42,68,176,.07)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:15px;color:var(--muted);margin-top:10px}
+.legend span{display:flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:26px;height:12px;border-radius:4px}
+.legend i.late{background:repeating-linear-gradient(45deg,#9A5A06 0 2px,#F2D5A6 2px 4.2px);border:1px solid #9A5A06}
+.story{list-style:none;margin:0;padding:0;position:relative}
+.story::before{content:"";position:absolute;left:8px;top:12px;bottom:12px;width:2px;background:var(--line)}
+.story li{position:relative;padding:7px 0 7px 32px;font-size:17px;line-height:1.6}
+.story li::before{content:"";position:absolute;left:1px;top:15px;width:12px;height:12px;border-radius:50%;background:var(--card);border:3px solid var(--accent)}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+ul.plain{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+ul.plain li{padding-left:26px;position:relative;font-size:16.5px}
+ul.plain li::before{position:absolute;left:0;top:0;font-weight:700}
+#tests li::before{content:"✓";color:var(--ok)}
+#open li::before{content:"◷";color:var(--later)}
+#nf li{color:var(--muted)}#nf li::before{content:"∅";color:var(--faint)}
+.logline{font-size:15.5px;color:var(--muted)}
+
 /* behind the scenes */
-details.how{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 18px}
-details.how>summary{cursor:pointer;padding:12px 0;font-size:17px;font-weight:650}
-details.how>summary span{font-weight:400;color:var(--muted);font-size:15px}
-details.how .inner{display:flex;flex-direction:column;gap:18px;padding:4px 0 16px;font-size:15.5px}
-details.how h3{font-size:15px}
-.inputs li{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+details.how{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:4px 24px}
+details.how>summary{padding:16px 0;font:600 21px/1.3 var(--serif)}
+details.how>summary span{font:400 15.5px var(--sans);color:var(--muted)}
+details.how .inner{display:flex;flex-direction:column;gap:22px;padding:4px 0 20px;font-size:16.5px}
+details.how h3{font:600 14px/1.2 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.inputs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.inputs li{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 .inputs a{color:var(--accent);font-weight:600}
-.inv{font:650 12px/1.3 system-ui,sans-serif;border:1px dashed var(--muted);color:var(--muted);border-radius:4px;padding:1px 6px}
-.appr{font:650 12.5px/1.3 system-ui,sans-serif;border-radius:4px;padding:2px 8px;color:#fff}
-.appr.yes{background:var(--live)}.appr.no{background:#6b7280}
+.inv{font:600 13px/1.3 var(--sans);border:1px dashed var(--muted);color:var(--muted);border-radius:6px;padding:1px 7px}
+.appr{font:600 13.5px/1.3 var(--sans);border-radius:6px;padding:2px 9px;color:#fff}
+.appr.yes{background:var(--ok)}.appr.no{background:#6B7280}
+#checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .okitem{color:var(--ok)}
-.warnitem{background:var(--warnbg);border:1px solid #e6c56a;color:#4a3200;border-radius:6px;padding:6px 10px}
-.code{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
-.raw{display:flex;flex-wrap:wrap;gap:8px}
-.raw a{font-size:14px;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:3px 10px;text-decoration:none}
-#log li{font-size:14px;color:var(--muted)}
-footer{font-size:14px;color:var(--muted);text-align:center}
+.warnitem{background:var(--warnbg);border:1px solid var(--warnline);color:#4A3200;border-radius:10px;padding:8px 12px}
+.code{font:13px var(--mono);color:var(--muted)}
+.raw{display:flex;flex-wrap:wrap;gap:9px}
+.raw a{font-size:15px;color:var(--accent);border:1px solid var(--line);border-radius:8px;padding:5px 12px;text-decoration:none;background:var(--card)}
+#auditBox ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line-soft);font-size:16px;align-items:flex-start}
+.feed li:first-child{border-top:0}
+.feed .when{display:block;font:400 13.5px var(--mono);color:var(--faint);margin-top:2px}
+footer{font-size:15px;color:var(--muted);text-align:center}
+
+/* source drawer */
+.scrim{position:fixed;inset:0;background:rgba(23,32,43,.3);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
+.scrim.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(680px,100vw);background:var(--card);box-shadow:-24px 0 64px -20px rgba(0,0,0,.38);transform:translateX(102%);transition:transform .3s cubic-bezier(.2,.8,.2,1);z-index:50;display:flex;flex-direction:column}
+.drawer.show{transform:none}
+.drawer header{display:flex;align-items:flex-start;gap:12px;padding:20px 24px 16px;border-bottom:1px solid var(--line)}
+.drawer .k{font:600 13px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.drawer h3{font:600 24px/1.2 var(--serif);margin-top:6px}
+.drawer .x{margin-left:auto;border:1px solid var(--line);background:var(--card);width:42px;height:42px;border-radius:10px;font-size:22px;line-height:1}
+.drawer .body{flex:1;overflow:auto;padding:18px 24px 30px}
+.drawer iframe{width:100%;height:calc(100vh - 170px);border:1px solid var(--line);border-radius:10px;background:#fff}
+.drawer .hint{font-size:15.5px;color:var(--muted);margin-bottom:12px}
+.drawer .hint a{color:var(--accent);font-weight:600}
+.drawer img{max-width:100%;border-radius:10px;border:1px solid var(--line)}
+table.fl{width:100%;border-collapse:collapse;font-size:15.5px}
+table.fl th{font:600 13px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 8px;background:var(--line-soft);position:sticky;top:-18px}
+table.fl td{padding:9px 8px;border-top:1px solid var(--line-soft);white-space:nowrap}
+table.fl td.d{font:400 14px var(--mono);color:var(--muted)}
+table.fl tr.hit td{background:var(--mark)}
+table.fl tr.soft td{background:#FFF5D3}
+.intake h4{font:600 20px/1.3 var(--serif);margin:20px 0 6px}
+.intake .sect.hit{background:#FFF6D3;border-radius:10px;padding:4px 12px 10px;margin:0 -12px}
+.intake .r{display:grid;grid-template-columns:44% 1fr;gap:12px;padding:6px 0;border-top:1px dashed var(--line-soft);font-size:16.5px}
+.intake p{font-size:16.5px;margin:6px 0}
+@media (max-width:600px){main{padding:16px 16px 60px}.bar-in{padding:10px 16px}header.bar{position:static}.card,.chartcard{padding:16px}.flag{padding:18px 16px 14px}.flag.done{padding:12px 16px}.reckey{padding:12px 16px}}
 </style>
 </head>
 <body>
-<header>
-  <b>CoVigil</b>
-  <span class="viewing">Viewing as</span>
+<header class="bar"><div class="bar-in">
+  <div class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#2A44B0"/><path d="M9 16.5l4.5 4.5L23 11" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>CoVigil</div>
+  <nav class="tabs"><a href="/" aria-current="page">Medicines</a><a href="/flags">Issues</a></nav>
   <div class="seg" role="group" aria-label="Viewing as">
-    <button type="button" id="rolePhys" aria-pressed="true">Physician (Clara)</button>
-    <button type="button" id="rolePharm" aria-pressed="false">Pharmacist</button>
+    <button type="button" id="rolePhys" aria-pressed="true"><span class="av clara">C</span>Physician</button>
+    <button type="button" id="rolePharm" aria-pressed="false"><span class="av rx">Rx</span>Pharmacist</button>
   </div>
   <span class="sp"></span>
   <span class="err" id="err" role="alert"></span>
-  <button class="act primary" type="button" id="live">Run live on the records</button>
-</header>
+  <a class="link" href="/patient">Patient screen</a>
+  <button class="btn primary small" type="button" id="live">▶ Run on the records</button>
+</div></header>
+
 <main>
-  <div class="hero">
-    <p class="sub" id="visitLine">Before your next visit</p>
-    <h1 id="pt"></h1>
-    <p class="visit" id="reason"></p>
-    <div class="prov" id="prov"></div>
-    <p class="nudge" id="nudge" hidden></p>
-  </div>
+  <section class="card pthead" id="hero" aria-label="Patient">
+    <div>
+      <div class="who" id="visitLine"></div>
+      <h1 id="pt"></h1>
+      <p class="visit" id="reason"></p>
+    </div>
+    <div class="tally" id="facts"></div>
+    <div class="row2">
+      <div class="allergy" id="allergyBox" hidden><span class="ic" aria-hidden="true">!</span><div><span class="lab">Allergies: </span><span id="allergy"></span></div></div>
+      <p class="prov" id="prov"></p>
+      <p class="nudge" id="nudge" hidden></p>
+    </div>
+  </section>
 
   <div id="bannerBox" hidden></div>
 
   <div class="card" id="liveBox" hidden aria-live="polite">
     <div class="liveTop">
       <div class="timer" id="timer" aria-label="Elapsed seconds">0.0<small> s</small></div>
-      <div class="bar" id="bar"><div></div></div>
-      <button class="act" type="button" id="stop" hidden>Stop and keep the last brief</button>
+      <div class="lbar" id="bar"><div></div></div>
+      <button class="btn small" type="button" id="stop" hidden>Stop and keep the last brief</button>
       <button class="link" type="button" id="hideLive">Hide</button>
     </div>
     <div class="livestatus" id="liveStatus"></div>
     <details id="streamWrap">
-      <summary class="logline" style="cursor:pointer">Watch what the computer is writing, word for word</summary>
+      <summary class="logline">Watch what the computer is writing, word for word</summary>
       <pre class="stream" id="stream" tabindex="0" aria-label="Raw text from the computer as it arrives"></pre>
       <div class="liveMeta" id="liveMeta"></div>
     </details>
@@ -160,75 +355,90 @@ footer{font-size:14px;color:var(--muted);text-align:center}
 
   <div class="warnstrip" id="warnTop" hidden></div>
 
-  <div class="sec">
-    <h2 id="flagsTitle">Things to review</h2>
-    <p class="progress" id="progress"></p>
-    <div id="flags" style="display:flex;flex-direction:column;gap:12px"></div>
-  </div>
+  <section id="medrec" aria-labelledby="recTitle">
+    <div class="sechead"><h2 id="recTitle">Medications</h2></div>
+    <div class="card recwrap">
+      <div class="reckey" id="reckey"></div>
+      <table class="rec">
+        <thead><tr><th scope="col">Medicine</th><th scope="col">Hospital records</th><th scope="col">Pharmacy fills</th><th scope="col">Family says</th><th scope="col">Our read</th><th scope="col">Issue</th></tr></thead>
+        <tbody id="rec"></tbody>
+      </table>
+    </div>
+  </section>
 
-  <div class="sec">
-    <h2>His story in one minute</h2>
-    <div class="card"><ul class="plain" id="story"></ul></div>
-  </div>
+  <a class="golink" id="golink" href="/flags"></a>
 
-  <div class="sec">
-    <h2>What he is really taking</h2>
-    <p class="sub">Worked out by comparing the records, the pharmacy history and what the family wrote.</p>
-    <div class="card"><table><tbody id="meds"></tbody></table></div>
-  </div>
+  <div class="sechead ctxhead"><h2>Context</h2></div>
+
+  <section class="card tl">
+    <h3>Pharmacy fills</h3>
+    <div id="chart" style="margin-top:12px"><p class="logline">Loading the pharmacy history…</p></div>
+  </section>
 
   <div class="two">
-    <div class="card"><h3>Allergies</h3><div id="allergy"></div></div>
-    <div class="card"><h3>Already done, no need to repeat</h3><ul class="plain" id="tests"></ul></div>
-    <div class="card"><h3>Other clinicians asked for</h3><ul class="plain" id="open"></ul></div>
-    <div class="card"><h3>Looked for, not found in the records</h3><ul class="plain" id="nf"></ul></div>
+    <section class="card"><h3>Story</h3><ul class="story" id="story"></ul></section>
+    <section class="card"><h3>Already done</h3><ul class="plain" id="tests"></ul>
+      <h3 style="margin-top:22px">Requested by others</h3><ul class="plain" id="open"></ul>
+      <h3 style="margin-top:22px">Looked for, not found</h3><ul class="plain" id="nf"></ul></section>
   </div>
 
+  <section class="glance" aria-label="At a glance"><div id="glance"></div></section>
+
   <details class="how" id="how">
-    <summary>How this brief was made <span>· the records it read, the checks it passed, and every decision so far</span></summary>
+    <summary>How this was made <span>· sources, checks, decision log</span></summary>
     <div class="inner">
-      <div><h3>What the computer read</h3><ul class="inputs" id="inputs" style="margin-top:8px"></ul>
-        <p class="logline" style="margin-top:6px">All of it is invented for this demo. The patient's answers are included only after a pharmacist approves them.</p></div>
-      <div><h3>Automatic checks</h3><ul id="checks" style="margin-top:8px"></ul><div id="auditInline"></div></div>
-      <div id="auditBox" hidden><h3>Second look: does each line match its source?</h3><div id="audit" style="margin-top:8px"></div></div>
-      <div><h3>See exactly what was sent and what came back</h3><div class="raw" id="raw" style="margin-top:8px"></div></div>
-      <div><h3>Who decided what, and when</h3><ul id="log" style="margin-top:8px"></ul></div>
+      <div><h3>What the computer read</h3><ul class="inputs" id="inputs"></ul>
+        <p class="logline" style="margin-top:8px">All of it is invented for this demo. The patient's answers are included only after a pharmacist approves them.</p></div>
+      <div><h3>Automatic checks</h3><ul id="checks"></ul><div id="auditInline"></div></div>
+      <div id="auditBox" hidden><h3>Second look: does each line match its source?</h3><div id="audit"></div></div>
+      <div><h3>See exactly what was sent and what came back</h3><div class="raw" id="raw"></div></div>
+      <div><h3>Who decided what, and when</h3><ul class="feed" id="log"></ul></div>
       <div><h3>Demo controls</h3>
-        <div class="row" style="margin-top:8px">
-          <button class="act" type="button" id="aud">Run the second look</button>
-          <button class="act" type="button" id="reset">Clear all decisions</button>
-          <a class="act" href="/patient" id="patientLink">Open the patient screen</a>
-          <label class="row" style="font-size:15px"><input type="checkbox" id="hasPharm" checked> This clinic has a pharmacist</label>
+        <div class="row">
+          <button class="btn small" type="button" id="aud">Run the second look</button>
+          <button class="btn small" type="button" id="reset">Clear all decisions</button>
+          <a class="btn small" href="/patient" id="patientLink">Open the patient screen</a>
+          <label class="row" style="font-size:16px;gap:8px"><input type="checkbox" id="hasPharm" checked style="width:20px;height:20px;min-width:0;flex:none"> This clinic has a pharmacist</label>
         </div></div>
     </div>
   </details>
   <footer id="notice"></footer>
 </main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="dt">
+  <header><div><div class="k" id="dk"></div><h3 id="dt"></h3></div><button class="x" id="dclose" aria-label="Close source">×</button></header>
+  <div class="body" id="dbody"></div>
+</aside>
+
 <script>
-var S={brief:null,state:{verifications:{},decisions:{},log:[]},audit:null,inputs:[],raw:{},role:"physician",hasPharm:true,running:false,asking:{},editing:{}};
+var S={brief:null,state:{verifications:{},decisions:{},log:[]},audit:null,inputs:[],raw:{},role:"physician",hasPharm:true,running:false,editing:{},asking:{},fills:null};
+var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function $(id){return document.getElementById(id);}
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function when(t){if(!t)return "";var d=new Date(t);if(isNaN(d))return String(t);return d.toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});}
 function day(t){var d=new Date(t+"T12:00:00");if(isNaN(d))return t;return d.toLocaleDateString([], {day:"numeric",month:"short"});}
 function cap(t){t=String(t||"");return t.charAt(0).toUpperCase()+t.slice(1);}
+function firstName(){var p=(S.brief&&S.brief.patient)||{};return (p.name||"the patient").split(" ")[0];}
 
-/* ---------- sources in plain words ---------- */
+/* ---------- sources: short labels; a chip opens the source beside the page ---------- */
 function srcLabel(s){var m;
-  if((m=/^fax p\.?\s*(\d+)/i.exec(s)))return "Fax, page "+m[1];
-  if((m=/^fills?:\s*(.+?)\s+(\d{4}-\d{2}-\d{2})\s*$/i.exec(s)))return "Pharmacy record: "+m[1]+", "+day(m[2]);
-  if((m=/^fills?:\s*(.+)$/i.exec(s)))return "Pharmacy record: "+m[1];
-  if((m=/^intake:\s*(.+)$/i.exec(s)))return "Intake form: "+m[1];
-  if((m=/^patient:\s*(.+)$/i.exec(s)))return "Patient's answer: "+m[1];
-  if((m=/^bottle photo:\s*(.+)$/i.exec(s)))return "Bottle photo: "+m[1];
+  if((m=/^fax p\.?\s*(\d+)/i.exec(s)))return "fax p."+m[1];
+  if((m=/^fills?:\s*(.+?)\s+(\d{4}-\d{2}-\d{2})\s*$/i.exec(s)))return "fills: "+m[1]+" "+day(m[2]);
+  if((m=/^fills?:\s*(.+)$/i.exec(s)))return "fills: "+m[1];
+  if((m=/^intake:\s*(.+)$/i.exec(s)))return "intake: "+m[1];
+  if((m=/^patient:\s*(.+)$/i.exec(s)))return "patient: "+m[1];
+  if((m=/^bottle photo:\s*(.+)$/i.exec(s)))return "bottle photo: "+m[1];
   return s;}
-function chip(s){var m=/^fax p\.?\s*(\d+)/i.exec(s),e,label=srcLabel(s);
-  if(m){e=el("a","src",label);e.href="/data/outside_records_fax.pdf#page="+m[1];e.title="Open this page of the fax";}
-  else if(/^(patient|bottle photo)\b/i.test(s)){e=el("a","src",label);e.href="/patient#staff";e.title="Open the patient's answers and photos";}
-  else if(/^fills?:/i.test(s)){e=el("a","src",label);e.href="/data/pharmacy_fills.csv";e.title="Open the pharmacy history";}
-  else if(/^intake:/i.test(s)){e=el("a","src",label);e.href="/data/intake_form.md";e.title="Open the intake form";}
-  else e=el("span","src",label);
-  if(e.tagName==="A"){e.target="_blank";e.rel="noopener";}
-  return e;}
+function srcTitle(s){var m;
+  if((m=/^fax p\.?\s*(\d+)/i.exec(s)))return "Open page "+m[1]+" of the faxed records";
+  if(/^fills?:/i.test(s))return "Open the pharmacy fill history";
+  if(/^intake/i.test(s))return "Open the intake form";
+  if(/^(patient|bottle photo)/i.test(s))return "Open the patient's own answer";
+  return "Show this source";}
+function srcType(s){if(/^fax/i.test(s))return "fax";if(/^fills?:/i.test(s))return "fills";if(/^intake/i.test(s))return "intake";if(/^(patient|bottle photo)/i.test(s))return "patient";return "other";}
+function chip(s,label){var e=el("button","src "+srcType(s),label||srcLabel(s));e.type="button";e.dataset.src=s;e.title=srcTitle(s);return e;}
 function withSrc(parent,text,sources){parent.appendChild(document.createTextNode(text+" "));(sources||[]).forEach(function(s){parent.appendChild(chip(s));});return parent;}
 async function api(path,body){
   $("err").textContent="";
@@ -242,7 +452,7 @@ function originOf(b){var o=(b&&b.origin)||"sample";if(o==="model")return "saved"
 /* ---------- checks: map "story[2] has no sources" to items ---------- */
 function problemIndex(b){var map={};(b.validation_problems||[]).forEach(function(p){
   var m=/^([a-z_]+)\[(\d+)\]/.exec(p);if(m){var k=m[1]+":"+m[2];(map[k]=map[k]||[]).push(p);}});return map;}
-var SECTION_NAMES={story:"Story line",medication_issues:"Item to review",tests_already_done:"Test",medications_actually_taking:"Medicine",open_items_from_other_clinicians:"Request"};
+var SECTION_NAMES={story:"Story line",medication_issues:"Issue",tests_already_done:"Test",medications_actually_taking:"Medicine",open_items_from_other_clinicians:"Request"};
 function plainProblem(p){var m=/^([a-z_]+)\[(\d+)\]\s*(.*)$/.exec(p);if(!m)return cap(p);
   var what=SECTION_NAMES[m[1]]||m[1];var rest=m[3].replace(/^has no sources$/,"does not say where it comes from").replace(/^reads like an order or diagnosis.*/,"is worded like an order or a diagnosis").replace(/^has an invalid 'when'/,"does not say when it matters");
   return what+" "+(+m[2]+1)+" "+rest;}
@@ -258,119 +468,249 @@ function decorate(node,key,text,pmap){
 }
 
 /* ---------- loading ---------- */
-async function load(){var j=await api("/api/brief");S.brief=j.brief;applyMeta(j);render();}
+async function load(){var j=await api("/api/brief");S.brief=j.brief;applyMeta(j);render();
+  getText("/data/pharmacy_fills.csv").then(function(t){S.fills=csv(t);renderMedRec(problemIndex(S.brief));}).catch(function(){});}
 function applyMeta(j){S.state=j.state||S.state;S.audit=j.audit||null;S.inputs=j.inputs||[];S.raw=j.raw||{};}
 async function refreshMeta(){try{var j=await api("/api/brief");applyMeta(j);}catch(e){}}
 
 /* ---------- render ---------- */
 function list(id,items,fmt,key,pmap,textOf,empty){var ul=$(id);ul.textContent="";(items||[]).forEach(function(it,i){var li=el("li");fmt(li,it);if(key)decorate(li,key+":"+i,textOf?textOf(it):it.text,pmap);ul.appendChild(li);});if(!(items||[]).length){var li=el("li","logline",empty||"Nothing listed.");ul.appendChild(li);}}
 function patientInput(){return (S.inputs||[]).filter(function(x){return x.kind==="patient";})[0];}
+function issues(){return (S.brief&&S.brief.medication_issues)||[];}
 function renderProv(){
   var b=S.brief,o=originOf(b),pv=$("prov"),pi=patientInput(),n=3+(pi&&pi.approved?1:0);pv.className="prov "+o;pv.textContent="";
-  if(o==="sample"){pv.appendChild(el("b",null,"This is a hand-written example. "));pv.appendChild(document.createTextNode("The computer did not write it. Press “Run live on the records” to have it read the records now."));}
-  else{pv.appendChild(el("b",null,o==="live"?"Written by the computer just now":"Written by the computer"+(b.generated_at?" on "+when(b.generated_at):" earlier")));
-    pv.appendChild(document.createTextNode(", from "+(n===4?"the fax, the pharmacy history, the intake form and the patient's own answers":"the fax, the pharmacy history and the intake form")+". It can be wrong. Each line shows where it comes from, and nothing happens until you decide."));}
+  if(o==="sample"){pv.appendChild(el("span","tag","Example"));pv.appendChild(el("span",null,"Hand-written sample, not computer output."));}
+  else{pv.appendChild(el("span","tag",o==="live"?"Just written":"Computer-written"));
+    pv.appendChild(el("span",null,"Drafted by software"+(o==="saved"&&b.generated_at?" "+when(b.generated_at):"")+" from "+n+" sources. Check the source before acting."));}
   var ng=$("nudge");ng.textContent="";ng.hidden=true;
-  if(pi&&!pi.approved){ng.hidden=false;ng.appendChild(document.createTextNode("His own answers about his medicines are not included yet: he has not confirmed them, or the pharmacist has not approved them. "));var a=el("a",null,"Open the patient screen");a.href="/patient";ng.appendChild(a);ng.appendChild(document.createTextNode("."));}
+  if(pi&&!pi.approved){ng.hidden=false;ng.appendChild(document.createTextNode("Patient's own answers not included yet. "));var a=el("a",null,"Patient screen");a.href="/patient";ng.appendChild(a);ng.appendChild(document.createTextNode("."));}
+}
+function renderHero(){
+  var b=S.brief,p=b.patient||{},is=issues(),st=S.state,pharm=S.role==="pharmacist";
+  $("visitLine").textContent=pharm?"Pharmacist check":"Pre-visit review";
+  $("pt").textContent=[p.name||"New patient",p.age].filter(Boolean).join(", ");
+  $("reason").textContent=p.reason_for_visit||"";
+  var before=is.filter(function(f){return f.when==="before_visit";}).length;
+  var notTaking=(b.medications_actually_taking||[]).filter(function(m){return m.status&&m.status!=="taking";}).length;
+  var done=is.filter(function(f){return pharm?(st.verifications||{})[f.id]:(st.decisions||{})[f.id];}).length;
+  function tal(n,label,hot){return '<div class="tal'+(hot?" hot":"")+'"><b>'+n+'</b><span>'+label+'</span></div>';}
+  $("facts").innerHTML=tal((b.medications_actually_taking||[]).length,"medicines found")+
+    (notTaking?tal(notTaking,"probably not taken",true):"")+
+    tal(is.length,"issues",before>0)+
+    tal(done+"/"+is.length,pharm?"checked by you":"decided");
 }
 function render(){
-  var b=S.brief,st=S.state;if(!b)return;var pmap=problemIndex(b);
+  var b=S.brief;if(!b)return;var pmap=problemIndex(b);
+  document.body.classList.toggle("role-pharm",S.role==="pharmacist");
   $("notice").textContent=(b.notice||"Software-generated draft for clinician review. Not a diagnosis.")+" All patient data on this page is invented.";
-  var p=b.patient||{};$("pt").textContent=[p.name,p.age].filter(Boolean).join(", ")||"New patient";
-  $("reason").textContent=p.reason_for_visit||"";
-  renderProv();
+  renderHero();renderProv();
   var ps=b.validation_problems||[],wt=$("warnTop");wt.hidden=!ps.length;
-  if(ps.length){wt.textContent="";wt.appendChild(el("b",null,ps.length+" line"+(ps.length===1?"":"s")+" below did not pass an automatic check. "));wt.appendChild(document.createTextNode("They are outlined in yellow. Treat them with extra care."));}
+  if(ps.length){wt.textContent="";wt.appendChild(el("b",null,ps.length+" line"+(ps.length===1?"":"s")+" below did not pass an automatic check. "));wt.appendChild(document.createTextNode("Outlined in yellow."));}
   list("story",b.story,function(li,it){withSrc(li,it.text,it.sources);},"story",pmap);
-  var tb=$("meds");tb.textContent="";
-  var words={taking:"Taking",probably_not_taking:"Probably not taking",unclear:"Unclear"};
-  (b.medications_actually_taking||[]).forEach(function(m,i){var tr=el("tr");
-    var n=el("td","med");n.appendChild(document.createTextNode(cap(m.drug)));if(m.dose){n.appendChild(document.createElement("br"));n.appendChild(el("span","logline",m.dose));}tr.appendChild(n);
-    var s=el("td");s.appendChild(el("span","st "+(m.status||""),words[m.status]||cap(String(m.status||"").replace(/_/g," "))));tr.appendChild(s);
-    var ev=withSrc(el("td"),m.evidence||"",m.sources);tr.appendChild(ev);
-    decorate(ev,"medications_actually_taking:"+i,m.evidence,pmap);
-    tb.appendChild(tr);});
-  if(!(b.medications_actually_taking||[]).length){var tr0=el("tr"),td0=el("td","logline","Nothing listed.");tr0.appendChild(td0);tb.appendChild(tr0);}
-  var a=$("allergy");a.textContent="";if(b.allergies){withSrc(a,b.allergies.text||"",b.allergies.sources);decorate(a,"allergies:0",b.allergies.text,pmap);}else a.appendChild(el("span","logline","Nothing listed."));
+  renderMedRec(pmap);
+  var a=$("allergy");a.textContent="";$("allergyBox").hidden=!b.allergies;
+  if(b.allergies){withSrc(a,b.allergies.text||"",b.allergies.sources);decorate(a,"allergies:0",b.allergies.text,pmap);}
   list("tests",b.tests_already_done,function(li,it){withSrc(li,[it.test,it.date?day(it.date):"",it.result].filter(Boolean).join(" · "),it.sources);},"tests_already_done",pmap,function(it){return it.result||it.test;});
   list("open",b.open_items_from_other_clinicians,function(li,it){withSrc(li,it.text,it.sources);},"open_items_from_other_clinicians",pmap);
   list("nf",(b.not_found||[]).map(function(t){return {text:t};}),function(li,it){li.appendChild(document.createTextNode(it.text));});
-  renderFlags(pmap);renderAudit();renderChecks();renderInputs();renderRaw();
-  var lg=$("log");lg.textContent="";
-  var titles={};(b.medication_issues||[]).forEach(function(f){titles[f.id]=f.title;});
-  (st.log||[]).slice().reverse().forEach(function(e){var txt,what=titles[e.flag_id]?"“"+titles[e.flag_id]+"”":e.flag_id;
-    if(e.type==="decision")txt=e.by+(e.action==="accept"?" will review ":" set aside ")+what+(e.reason?" · reason: "+e.reason:"");
-    else if(e.type==="patient_review")txt=(e.by||"Pharmacist")+(e.status==="approved"?" approved the patient's answers":e.status==="returned"?" sent the patient's answers back":" reviewed the patient's answers")+(e.note?" · "+e.note:"");
-    else if(e.flag_id)txt=e.by+(e.status==="verified"?" checked and confirmed ":" could not confirm ")+what+(e.note?" · "+e.note:"");
-    else txt=(e.type||"event")+(e.detail?" · "+e.detail:"");
-    lg.appendChild(el("li",null,when(e.at)+" · "+txt));});
-  if(!(st.log||[]).length)lg.appendChild(el("li",null,"No decisions yet."));
+  renderIssueLink();renderGlance();renderTimeline();renderAudit();renderChecks();renderInputs();renderRaw();renderLog();
   $("rolePharm").setAttribute("aria-pressed",S.role==="pharmacist");$("rolePhys").setAttribute("aria-pressed",S.role==="physician");
   $("rolePharm").disabled=!S.hasPharm;
 }
-function pharmLine(v){
-  if(!S.hasPharm)return el("div","pharm unresolved","Not checked by a pharmacist: this clinic has none.");
-  if(!v)return el("div","pharm","A pharmacist has not checked this yet.");
-  return el("div","pharm "+v.status,(v.status==="verified"?"✓ Checked and confirmed by ":"Could not be confirmed by ")+v.by+", "+when(v.at)+(v.note?": “"+v.note+"”":""));}
-function flagCard(f,i,pmap){
-  var b=S.brief,st=S.state,d=(st.decisions||{})[f.id],v=(st.verifications||{})[f.id];
-  var later=f.when!=="before_visit",isPhys=S.role==="physician";
-  var collapsed=isPhys&&d&&!S.editing[f.id];
-  var card=el("div","flag"+(later?" later":"")+(isPhys&&d?" "+d.action:"")+(collapsed?" done":""));
-  var t=el("div","title",f.title);decorate(t,"medication_issues:"+i,f.title,pmap);
-  if(t.classList.contains("hasprob")){t.classList.remove("hasprob");card.classList.add("hasprob");}
-  card.appendChild(t);
-  if(collapsed){
-    var o=el("div","outcome "+d.action,d.action==="accept"?"✓ You will review this at the visit.":"Set aside: “"+d.reason+"”");
-    var ch=el("button","link","Change");ch.type="button";ch.style.marginLeft="10px";ch.onclick=function(){S.editing[f.id]=true;render();};o.appendChild(ch);card.appendChild(o);return card;}
-  card.appendChild(el("div","why",f.why_review));
-  var fr=el("div","from","Where this comes from: ");(f.sources||[]).forEach(function(s){fr.appendChild(chip(s));});card.appendChild(fr);
-  card.appendChild(pharmLine(v));
-  if(S.role==="pharmacist"&&S.hasPharm){
-    var row=el("div","row"),ta=el("textarea");ta.rows=2;ta.id="note-"+f.id;ta.placeholder="What did you check, and what did you find?";ta.setAttribute("aria-label","Pharmacist note for "+f.title);ta.value=v?v.note:"";
-    var ok=el("button","act yes","I checked: this is right"),un=el("button","act","I could not confirm this");ok.type=un.type="button";
-    ok.onclick=function(){verify(f.id,"verified",ta.value);};un.onclick=function(){verify(f.id,"unresolved",ta.value);};
-    row.appendChild(ta);row.appendChild(ok);row.appendChild(un);card.appendChild(row);
-  }else if(isPhys){
-    var r2=el("div","row");
-    if(S.asking[f.id]){
-      var inp=el("input");inp.type="text";inp.id="reason-"+f.id;inp.placeholder="In a few words, why is this not a concern?";inp.setAttribute("aria-label","Reason for setting aside: "+f.title);
-      var go=el("button","act","Set aside"),ca=el("button","link","Cancel");go.type=ca.type="button";
-      go.onclick=function(){if(!inp.value.trim()){inp.placeholder="Please add a few words first, so the next person knows why";inp.style.borderColor="var(--risk)";inp.focus();return;}decide(f.id,"dismiss",inp.value);};ca.onclick=function(){delete S.asking[f.id];render();};
-      inp.onkeydown=function(e){if(e.key==="Enter")go.click();};
-      r2.appendChild(inp);r2.appendChild(go);r2.appendChild(ca);card.appendChild(r2);setTimeout(function(){inp.focus();},0);
-    }else{
-      var ac=el("button","act yes","I’ll review this"),di=el("button","act","Not a concern…");ac.type=di.type="button";
-      ac.onclick=function(){decide(f.id,"accept","");};di.onclick=function(){S.asking[f.id]=true;render();};
-      r2.appendChild(ac);r2.appendChild(di);card.appendChild(r2);
-    }
-  }
-  return card;
+
+/* ---------- step 1: medication reconciliation ---------- */
+var STATUS={taking:["taking","✓","Taking"],probably_not_taking:["not","✕","Probably not taking"],unclear:["unclear","?","Unclear"]};
+function drugKey(name){return String(name||"").toLowerCase().replace(/\(.*?\)/g,"").trim().split(/\s+/)[0]||"";}
+function visitDay(){return utc((S.brief&&S.brief.visit_date)||"2026-11-23");}
+function flagsFor(drug){var k=drugKey(drug);if(k.length<3)return [];
+  return issues().map(function(f,i){return [f,i];}).filter(function(x){return (x[0].title+" "+x[0].why_review).toLowerCase().indexOf(k)>=0;});}
+function pharmacyCell(m){
+  var td=el("td"),c=el("div","cell"),k=drugKey(m.drug);td.appendChild(c);td.dataset.l="Pharmacy fills";
+  if(!S.fills){(m.sources||[]).filter(function(s){return srcType(s)==="fills";}).forEach(function(s){c.appendChild(chip(s));});if(!c.childNodes.length)c.appendChild(el("span","no","—"));return td;}
+  var rows=S.fills.filter(function(r){return (r.drug||"").toLowerCase()===k;});
+  if(!rows.length){c.appendChild(el("span","no","No fills on record"));if(/over the counter|otc/i.test(m.drug+" "+m.evidence))c.appendChild(el("span","sm","Over the counter"));return td;}
+  var DAY=864e5,last=rows.reduce(function(a,r){return utc(r.fill_date)>utc(a.fill_date)?r:a;}),a=utc(last.fill_date),through=a+(+last.days_supply||30)*DAY,v=visitDay(),gap=Math.round((v-through)/DAY);
+  if(gap>7){c.appendChild(el("span","bad","✕ Ran out about "+fmtD(through)));c.appendChild(el("span","sm",gap+" days without"));}
+  else c.appendChild(el("span","fine","✓ Supplied to "+fmtD(through)));
+  c.appendChild(chip("fills: "+k+" "+last.fill_date,"last fill "+fmtD(a)));
+  return td;}
+function recordsCell(m,fl){var td=el("td"),c=el("div","cell");td.appendChild(c);td.dataset.l="Hospital records";
+  var fx=(m.sources||[]).filter(function(s){return srcType(s)==="fax";});
+  if(fx.length){var w=el("div");fx.forEach(function(s){w.appendChild(chip(s));});c.appendChild(w);return td;}
+  // the brief records what each line cites, not what each source lists: say "not cited", and borrow the pages its issues cite
+  var via=[];fl.forEach(function(x){(x[0].sources||[]).forEach(function(s){if(srcType(s)==="fax"&&via.indexOf(s)<0)via.push(s);});});
+  c.appendChild(el("span","no","Not cited"));
+  if(via.length){var w2=el("div");via.forEach(function(s){w2.appendChild(chip(s));});c.appendChild(el("span","sm","via its issue:"));c.appendChild(w2);}
+  return td;}
+function familyCell(m){var td=el("td"),c=el("div","cell");td.appendChild(c);td.dataset.l="Family says";
+  var it=(m.sources||[]).filter(function(s){var t=srcType(s);return t==="intake"||t==="patient";});
+  if(!it.length)c.appendChild(el("span","no","Not cited"));
+  else{c.appendChild(el("span",null,"Listed"));var w=el("div");it.forEach(function(s){w.appendChild(chip(s,srcType(s)==="intake"?"intake form":null));});c.appendChild(w);}
+  return td;}
+function issueLinks(fl){var td=el("td");td.dataset.l="Issue";
+  if(!fl.length){td.appendChild(el("span","no","None"));td.firstChild.style.color="var(--faint)";return td;}
+  fl.forEach(function(x){var f=x[0],d=(S.state.decisions||{})[f.id],a=el("a","issue "+(d?"done":f.when==="before_visit"?"now":"later"));a.href="/flags#flag-"+f.id;
+    a.appendChild(el("span","u",d?(d.action==="accept"?"✓ Reviewing":"Set aside"):f.when==="before_visit"?"⚠ Before visit":"◷ At visit"));
+    a.appendChild(el("span",null,"#"+(x[1]+1)));a.title=f.title;td.appendChild(a);td.appendChild(document.createElement("br"));});
+  return td;}
+function renderMedRec(pmap){
+  var b=S.brief;if(!b)return;var meds=b.medications_actually_taking||[],tb=$("rec");tb.textContent="";
+  var counts={taking:0,probably_not_taking:0,unclear:0};
+  var rows=meds.map(function(m,i){var fl=flagsFor(m.drug),k=STATUS[m.status]?m.status:"unclear";counts[k]++;
+    var rank=k!=="taking"?0:fl.some(function(x){return x[0].when==="before_visit";})?1:fl.length?2:3;return {m:m,i:i,fl:fl,k:k,rank:rank};});
+  rows.sort(function(x,y){return x.rank-y.rank||x.i-y.i;});
+  var now=rows.filter(function(r){return r.rank<2;}),soon=rows.filter(function(r){return r.rank===2;}),ok=rows.filter(function(r){return r.rank===3;});
+  function grp(t){var tr=el("tr","grp"),td=el("td",null,t);td.colSpan=6;tr.appendChild(td);tb.appendChild(tr);}
+  function row(r){var m=r.m,s=STATUS[r.k],tr=el("tr",r.rank<3?"attn"+(r.rank===2?" soon":""):"");
+    var n=el("td");n.appendChild(el("span","mname",m.drug));if(m.dose)n.appendChild(el("span","mdose",m.dose));
+    var ev=el("span","mev",m.evidence||"");n.appendChild(ev);decorate(n,"medications_actually_taking:"+r.i,m.evidence,pmap);tr.appendChild(n);
+    tr.appendChild(recordsCell(m,r.fl));tr.appendChild(pharmacyCell(m));tr.appendChild(familyCell(m));
+    var st=el("td");st.dataset.l="Our read";st.appendChild(el("span","pill "+s[0],s[1]+" "+s[2]));tr.appendChild(st);
+    tr.appendChild(issueLinks(r.fl));tb.appendChild(tr);}
+  if(now.length){grp("⚠ Before the visit · "+now.length);now.forEach(row);}
+  if(soon.length){grp("◷ Discuss at the visit · "+soon.length);soon.forEach(row);}
+  if(ok.length){grp("Sources agree · "+ok.length);ok.forEach(row);}
+  if(S.fills){var known=meds.map(function(m){return drugKey(m.drug);}),seen={};
+    var old=S.fills.filter(function(r){var d=(r.drug||"").toLowerCase();if(known.indexOf(d)>=0||seen[d])return false;seen[d]=1;return true;});
+    if(old.length){grp("No longer on his list · "+old.length);
+      old.forEach(function(r){var d=(r.drug||"").toLowerCase(),fills=S.fills.filter(function(x){return (x.drug||"").toLowerCase()===d;}),last=fills.reduce(function(a,x){return utc(x.fill_date)>utc(a.fill_date)?x:a;});
+        var tr=el("tr","old"),n=el("td");n.appendChild(el("span","mname",d));n.appendChild(el("span","mdose",(last.strength||"")+(last.directions?", "+last.directions:"")));tr.appendChild(n);
+        var rc=el("td");rc.dataset.l="Hospital records";rc.appendChild(el("span","no","—"));tr.appendChild(rc);
+        var ph=el("td"),c=el("div","cell");ph.dataset.l="Pharmacy fills";c.appendChild(el("span",null,"Last filled "+fmtD(utc(last.fill_date))));c.appendChild(chip("fills: "+d,"every fill"));ph.appendChild(c);tr.appendChild(ph);
+        var fm=el("td");fm.dataset.l="Family says";fm.appendChild(el("span","no","—"));tr.appendChild(fm);
+        var st=el("td");st.dataset.l="Our read";st.appendChild(el("span","pill off","– No longer filled"));tr.appendChild(st);
+        var is=el("td");is.dataset.l="Issue";tr.appendChild(is);tb.appendChild(tr);});}}
+  if(!meds.length){var tr0=el("tr"),td0=el("td","logline","No medicines listed.");td0.colSpan=6;tr0.appendChild(td0);tb.appendChild(tr0);}
+  $("reckey").innerHTML='<span><b style="color:var(--ink)">'+meds.length+'</b> medicines</span>'+
+    '<span class="pill taking">✓ '+counts.taking+' taking</span>'+(counts.probably_not_taking?'<span class="pill not">✕ '+counts.probably_not_taking+' probably not taking</span>':'')+(counts.unclear?'<span class="pill unclear">? '+counts.unclear+' unclear</span>':'')+
+    '';
 }
-function renderFlags(pmap){
-  var box=$("flags"),b=S.brief,st=S.state;box.textContent="";
-  var issues=b.medication_issues||[],n=issues.length;
-  var words=["No","One","Two","Three","Four","Five","Six"];
-  $("flagsTitle").textContent=n?(words[n]||n)+" thing"+(n===1?"":"s")+" to review about his medicines":"Nothing to review about his medicines";
-  var pr=$("progress");
-  if(!n)pr.textContent="The records, the pharmacy history and the intake form agree with each other.";
-  else if(S.role==="pharmacist"){var c=issues.filter(function(f){return (st.verifications||{})[f.id];}).length;pr.textContent="You have checked "+c+" of "+n+". Your note travels with each item to the physician.";}
-  else{var dn=issues.filter(function(f){return (st.decisions||{})[f.id];}).length;pr.textContent=dn===n?"You have decided on all "+n+". ":"You have decided on "+dn+" of "+n+". Most urgent first.";}
-  var now=[],later=[];issues.forEach(function(f,i){(f.when==="before_visit"?now:later).push([f,i]);});
-  if(now.length){box.appendChild(el("div","group now","Sort out before he walks in"));now.forEach(function(x){box.appendChild(flagCard(x[0],x[1],pmap));});}
-  if(later.length){box.appendChild(el("div","group later","Talk about during the visit"));later.forEach(function(x){box.appendChild(flagCard(x[0],x[1],pmap));});}
+
+/* ---------- step 2 lives on /flags; here, one line that links to it ---------- */
+function renderIssueLink(){
+  var is=issues(),st=S.state,pharm=S.role==="pharmacist",g=$("golink");g.textContent="";
+  var done=is.filter(function(f){return pharm?(st.verifications||{})[f.id]:(st.decisions||{})[f.id];}).length,before=is.filter(function(f){return f.when==="before_visit";}).length;
+  g.classList.toggle("clear",!is.length||done===is.length);
+  if(!is.length){g.appendChild(el("b",null,"✓ No issues"));return;}
+  g.appendChild(el("b",null,is.length+" issue"+(is.length===1?"":"s")+" to review"));
+  g.appendChild(el("span","sub",(before?"⚠ "+before+" before the visit · ":"")+done+" of "+is.length+(pharm?" checked":" decided")));
+  g.appendChild(el("span","go","Review →"));
 }
+function renderLog(){
+  var lg=$("log"),st=S.state,titles={};lg.textContent="";issues().forEach(function(f){titles[f.id]=f.title;});
+  (st.log||[]).slice().reverse().forEach(function(e){var txt,what=titles[e.flag_id]?"“"+titles[e.flag_id]+"”":e.flag_id,av;
+    if(e.type==="decision"){txt=e.by+(e.action==="accept"?" accepted ":" dismissed ")+what+(e.reason?" · reason: "+e.reason:"");av=el("span","av clara",(e.by||"C")[0]);}
+    else if(e.type==="patient_review"){txt=(e.by||"Pharmacist")+(e.status==="approved"?" approved the patient's answers":e.status==="returned"?" sent the patient's answers back":" reviewed the patient's answers")+(e.note?" · "+e.note:"");av=el("span","av rx","Rx");}
+    else if(e.flag_id){txt=e.by+(e.status==="verified"?" confirmed ":" could not confirm ")+what+(e.note?" · "+e.note:"");av=el("span","av rx","Rx");}
+    else{txt=(e.type||"event")+(e.detail?" · "+e.detail:"");av=el("span","av pt","·");}
+    var li=el("li");li.appendChild(av);var dv=el("div",null,txt);dv.appendChild(el("span","when",when(e.at)));li.appendChild(dv);lg.appendChild(li);});
+  if(!(st.log||[]).length)lg.appendChild(el("li","logline","No decisions yet. Every check and decision is recorded here with a name and a time."));
+}
+
+
+/* ---------- at a glance: charts built from the brief's own words ---------- */
+function allTexts(){var b=S.brief,out=[];
+  (b.story||[]).forEach(function(x){out.push(x.text);});issues().forEach(function(x){out.push(x.title+". "+x.why_review);});
+  (b.medications_actually_taking||[]).forEach(function(x){out.push(x.evidence);});(b.tests_already_done||[]).forEach(function(x){out.push(x.result);});
+  (b.open_items_from_other_clinicians||[]).forEach(function(x){out.push(x.text);});return out.filter(Boolean);}
+function allSources(){var b=S.brief,out=[];function add(a){(a||[]).forEach(function(s){out.push(String(s));});}
+  (b.story||[]).forEach(function(x){add(x.sources);});issues().forEach(function(x){add(x.sources);});(b.medications_actually_taking||[]).forEach(function(x){add(x.sources);});
+  (b.tests_already_done||[]).forEach(function(x){add(x.sources);});(b.open_items_from_other_clinicians||[]).forEach(function(x){add(x.sources);});if(b.allergies)add(b.allergies.sources);return out;}
+function series(texts,label,numRe){ // longest "eGFR 52, then 44, then 36"-style run of numbers after a label
+  var best=null,re=new RegExp(label+"[^.;\\d]{0,24}?("+numRe+")((?:\\s*(?:,|then|to|→|->|and|from)\\s*(?:then\\s*|to\\s*)?"+numRe+")*)","ig");
+  texts.forEach(function(t){var m;re.lastIndex=0;while((m=re.exec(t))){var nums=(m[1]+" "+m[2]).match(new RegExp(numRe,"g")).map(Number);if(!best||nums.length>best.length)best=nums;}});
+  return best;}
+function orthostatic(texts){var r=null;texts.forEach(function(t){var m=/(\d{2,3})\/(\d{2,3})\s*(?:mm\s*hg\s*)?(?:when\s*)?lying[^.]*?(\d{2,3})\/(\d{2,3})\s*(?:mm\s*hg\s*)?(?:on\s*)?standing/i.exec(t)||/lying[:\s]+(\d{2,3})\/(\d{2,3})[^.]*?standing[:\s]+(\d{2,3})\/(\d{2,3})/i.exec(t);if(m&&!r)r=m.slice(1,5).map(Number);});return r;}
+function renderGlance(){
+  var box=$("glance"),texts=allTexts(),h="";
+  var bp=orthostatic(texts);
+  if(bp){var drop=bp[0]-bp[2],dd=bp[1]-bp[3],W=420,H=210,base=180,sc=function(v){return base-(v-40)*1.05;};
+    function col(x,sys,dia,lab,c){return '<rect x="'+x+'" y="'+sc(sys)+'" width="74" height="'+(sc(dia)-sc(sys))+'" rx="10" fill="'+c+'"/><text x="'+(x+37)+'" y="'+(sc(sys)-10)+'" text-anchor="middle" font-size="19" font-weight="700" fill="#18262B">'+sys+'/'+dia+'</text><text x="'+(x+37)+'" y="'+(base+24)+'" text-anchor="middle" font-size="16" fill="#56625F">'+lab+'</text>';}
+    h+='<div class="chartcard"><h3>Blood pressure on standing</h3><div class="big">−'+drop+' / −'+dd+' <small>mmHg when he stood up</small></div>'+
+      '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Lying '+bp[0]+'/'+bp[1]+', standing '+bp[2]+'/'+bp[3]+'">'+
+      '<line x1="20" x2="'+(W-20)+'" y1="'+sc(90)+'" y2="'+sc(90)+'" stroke="#E2DBCC" stroke-dasharray="5 5"/><text x="'+(W-20)+'" y="'+(sc(90)-6)+'" text-anchor="end" font-size="14" fill="#87908F">90 systolic</text>'+
+      col(90,bp[0],bp[1],"Lying","#2A44B0")+col(250,bp[2],bp[3],"Standing","#B03A2E")+
+      '<path d="M170 '+(sc(bp[0])+4)+' C 205 '+(sc(bp[0])+4)+', 215 '+(sc(bp[2])-4)+', 244 '+(sc(bp[2])-4)+'" fill="none" stroke="#B03A2E" stroke-width="2.5" marker-end="url(#ar)"/>'+
+      '<defs><marker id="ar" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#B03A2E"/></marker></defs></svg>'+
+      '<p class="note">Bar spans diastolic to systolic. As written in the brief.</p></div>';}
+  var eg=series(texts,"eGFR","\\d{2,3}");
+  if(eg&&eg.length>=2){var W2=420,H2=220,L=44,R=16,T=20,B=34,lo=0,hi=Math.max(70,Math.max.apply(null,eg)+10),
+      y=function(v){return T+(hi-v)/(hi-lo)*(H2-T-B);},x=function(i){return L+28+i*(W2-L-R-56)/(eg.length-1);};
+    var bands=[[60,hi,"#EAF3EE","60+"],[45,60,"#F6F1DE","45–59"],[30,45,"#FBEBD3","30–44"],[15,30,"#FBE0D9","15–29"],[0,15,"#F6D2CB","<15"]];
+    var s='<svg viewBox="0 0 '+W2+' '+H2+'" role="img" aria-label="eGFR readings '+eg.join(", ")+'">';
+    bands.forEach(function(b){s+='<rect x="'+L+'" y="'+y(b[1])+'" width="'+(W2-L-R)+'" height="'+(y(b[0])-y(b[1]))+'" fill="'+b[2]+'"/><text x="'+(L-6)+'" y="'+(y((b[0]+b[1])/2)+5)+'" text-anchor="end" font-size="13" fill="#87908F">'+b[3]+'</text>';});
+    s+='<polyline points="'+eg.map(function(v,i){return x(i)+","+y(v);}).join(" ")+'" fill="none" stroke="#18262B" stroke-width="3" stroke-linejoin="round"/>';
+    eg.forEach(function(v,i){s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="7" fill="'+(i===eg.length-1?"#B03A2E":"#18262B")+'" stroke="#fff" stroke-width="2.5"/><text x="'+x(i)+'" y="'+(y(v)-14)+'" text-anchor="'+(i===0?"start":i===eg.length-1?"end":"middle")+'" font-size="18" font-weight="700" fill="#18262B">'+v+'</text>';});
+    s+='<text x="'+L+'" y="'+(H2-10)+'" font-size="14" fill="#87908F">earliest</text><text x="'+(W2-R)+'" y="'+(H2-10)+'" text-anchor="end" font-size="14" fill="#87908F">latest</text></svg>';
+    var pct=Math.round(100*(eg[0]-eg[eg.length-1])/eg[0]);
+    h+='<div class="chartcard"><h3>Kidney function (eGFR)</h3><div class="big">'+eg[0]+' → '+eg[eg.length-1]+' <small>'+(pct>0?pct+"% lower":"")+' across '+eg.length+' readings</small></div>'+s+'<p class="note">Shaded by kidney-function band. Readings as written in the brief.</p></div>';}
+  var srcs=allSources(),cnt={fax:0,fills:0,intake:0,patient:0};srcs.forEach(function(s){var t=srcType(s);if(t in cnt)cnt[t]++;});
+  var max=Math.max(1,cnt.fax,cnt.fills,cnt.intake,cnt.patient),names={fax:"Fax pages",fills:"Pharmacy",intake:"Intake form",patient:"Patient"},cols={fax:"#7C8580",fills:"#2A44B0",intake:"#5E4A8C",patient:"#9A7B4F"};
+  var pages=12,inp=(S.inputs||[]).filter(function(x){return x.kind==="pdf";})[0];if(inp){var pm=/(\d+)\s*pages?/i.exec(inp.name||"");if(pm)pages=+pm[1];}
+  var cited={};srcs.forEach(function(s){var m=/^fax p\.?\s*(\d+)/i.exec(s);if(m)cited[m[1]]=(cited[m[1]]||0)+1;});
+  var nc=Object.keys(cited).length,pg="";for(var i=1;i<=pages;i++)pg+='<button type="button" class="'+(cited[i]?"cited":"")+'" data-src="fax p.'+i+'" title="Fax page '+i+(cited[i]?", cited "+cited[i]+" times":", not cited")+'">'+i+(cited[i]?'<span>'+cited[i]+'</span>':'')+'</button>';
+  h+='<div class="chartcard"><h3>Where the evidence comes from</h3><div class="big">'+srcs.length+' <small>citations across '+Object.keys(cnt).filter(function(k){return cnt[k];}).length+' kinds of record</small></div><div class="hbars">'+
+    Object.keys(cnt).filter(function(k){return cnt[k]||k!=="patient";}).map(function(k){return '<div class="r"><span>'+names[k]+'</span><div class="t"><i style="width:'+(100*cnt[k]/max)+'%;background:'+cols[k]+'"></i></div><b>'+cnt[k]+'</b></div>';}).join("")+
+    '</div><p class="note" style="margin-top:14px">Fax pages the brief relies on: <b>'+nc+' of '+pages+'</b>. Tap a page to open it.</p><div class="pages">'+pg+'</div></div>';
+  box.innerHTML=h;
+}
+
+/* ---------- pharmacy fill timeline (from the real fill history) ---------- */
+var cache={};
+async function getText(path){if(!cache[path]){var r=await fetch(path);if(!r.ok)throw new Error("Could not load "+path);cache[path]=await r.text();}return cache[path];}
+function csv(text){var rows=[];text.trim().split(/\r?\n/).forEach(function(line){var out=[],cur="",q=false;
+  for(var i=0;i<line.length;i++){var ch=line[i];if(ch==='"')q=!q;else if(ch===","&&!q){out.push(cur);cur="";}else cur+=ch;}out.push(cur);rows.push(out);});
+  var head=rows.shift();return rows.map(function(r){var o={};head.forEach(function(h,i){o[h]=r[i];});return o;});}
+function utc(s){var m=/^(\d{4})-(\d\d)-(\d\d)/.exec(s||"");return m?Date.UTC(+m[1],+m[2]-1,+m[3]):null;}
+function fmtD(t){var d=new Date(t);return d.getUTCDate()+" "+MON[d.getUTCMonth()];}
+function renderTimeline(){getText("/data/pharmacy_fills.csv").then(function(t){drawTimeline(csv(t));}).catch(function(){$("chart").innerHTML='<p class="logline">Could not load the pharmacy history.</p>';});}
+function drawTimeline(rows){
+  var box=$("chart"),b=S.brief,DAY=864e5,visit=utc(b.visit_date||"2026-11-23");if(!rows.length){box.innerHTML='<p class="logline">No fills on record.</p>';return;}
+  var first=Math.min.apply(null,rows.map(function(r){return utc(r.fill_date);})),fd=new Date(first),vd=new Date(visit);
+  var start=Date.UTC(fd.getUTCFullYear(),fd.getUTCMonth(),1),end=Date.UTC(vd.getUTCFullYear(),vd.getUTCMonth()+1,1);
+  var meds=b.medications_actually_taking||[],stops={};
+  (b.drug_events||[]).forEach(function(e){if(e.type==="stop"&&utc(e.date))stops[e.drug.toLowerCase()]=utc(e.date);});
+  meds.forEach(function(m){var mm=/(?:discontinued|stopped)\s+(?:on\s+)?(\d{1,2})\s+([A-Za-z]{3})/i.exec(m.evidence||"");var k=(m.drug||"").split(/\s/)[0].toLowerCase();
+    if(mm&&!stops[k]){var mi=MON.indexOf(cap(mm[2].toLowerCase()));if(mi>=0)stops[k]=Date.UTC(vd.getUTCFullYear(),mi,+mm[1]);}});
+  var drugs=[];rows.forEach(function(r){var d=(r.drug||"").toLowerCase();if(drugs.indexOf(d)<0)drugs.push(d);});
+  var issueText=issues().map(function(f){return (f.title+" "+f.why_review).toLowerCase();}).join(" ");
+  drugs.sort(function(a,c){var x=issueText.indexOf(a)>=0?0:1,y=issueText.indexOf(c)>=0?0:1;return x-y||a.localeCompare(c);});
+  var otc=meds.filter(function(m){var s=m.sources||[];return s.length&&s.every(function(x){return /^(intake|patient|bottle)/i.test(x);})&&drugs.indexOf((m.drug||"").split(/\s/)[0].toLowerCase())<0&&(m.status||"taking")==="taking";});
+  var W=1100,L=190,R=20,top=44,rh=40,H=top+(drugs.length+otc.length)*rh+8;
+  function x(t){return L+(Math.min(Math.max(t,start),end)-start)/(end-start)*(W-L-R);}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Pharmacy fills by medicine"><defs><pattern id="late" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#F2D5A6"/><rect width="3.5" height="8" fill="#9A5A06"/></pattern></defs>';
+  for(var t=start;t<end;){var dt=new Date(t),xx=x(t);s+='<line x1="'+xx+'" x2="'+xx+'" y1="'+(top-8)+'" y2="'+(H-4)+'" stroke="#E2DBCC"/><text x="'+(xx+6)+'" y="'+(top-14)+'" font-size="16" fill="#87908F">'+MON[dt.getUTCMonth()]+'</text>';t=Date.UTC(dt.getUTCFullYear(),dt.getUTCMonth()+1,1);}
+  var vx=x(visit);s+='<line x1="'+vx+'" x2="'+vx+'" y1="'+(top-34)+'" y2="'+(H-4)+'" stroke="#18262B" stroke-width="2"/><text x="'+(vx-6)+'" y="'+(top-32)+'" font-size="16" font-weight="700" text-anchor="end" fill="#18262B">Visit '+fmtD(visit)+'</text>';
+  drugs.forEach(function(d,i){
+    var y=top+i*rh,fl=rows.filter(function(r){return (r.drug||"").toLowerCase()===d;}),stop=stops[d],last=0,lastFill=0,flagged=issueText.indexOf(d)>=0;
+    s+='<g class="crow" data-drug="'+esc(d)+'" tabindex="0" role="button" aria-label="'+esc(d)+': show every fill"><rect class="hov" x="0" y="'+(y+2)+'" width="'+W+'" height="'+(rh-4)+'" rx="8" fill="transparent"/>'+
+      '<text x="'+(L-14)+'" y="'+(y+26)+'" font-size="18" text-anchor="end" fill="#18262B" font-weight="'+(flagged?700:500)+'">'+esc(cap(d))+'</text>'+(flagged?'<circle cx="12" cy="'+(y+20)+'" r="5" fill="#B03A2E"/>':'');
+    fl.forEach(function(r){var a=utc(r.fill_date),e=a+(+r.days_supply||30)*DAY,late=stop&&a>stop;last=Math.max(last,e);lastFill=Math.max(lastFill,a);
+      s+='<rect x="'+x(a)+'" y="'+(y+10)+'" width="'+Math.max(3,x(e)-x(a)-2)+'" height="20" rx="5" fill="'+(late?"url(#late)":"#2A44B0")+'"'+(late?' stroke="#9A5A06" stroke-width="1"':' opacity=".88"')+'><title>'+esc(cap(d))+" filled "+fmtD(a)+", "+esc(r.days_supply)+' days</title></rect>';});
+    if(stop){var sx=x(stop);s+='<path d="M'+(sx-7)+' '+(y+13)+'l14 14m0-14l-14 14" stroke="#B03A2E" stroke-width="3" stroke-linecap="round"/>';}
+    var listed=meds.some(function(m){return (m.drug||"").split(/\s/)[0].toLowerCase()===d;});
+    if(!stop&&visit-last>14*DAY){
+      if(listed){var n=Math.round((visit-last)/DAY);s+='<rect x="'+(x(last)+2)+'" y="'+(y+10)+'" width="'+(vx-x(last)-4)+'" height="20" rx="5" fill="#FBE5DF" stroke="#B03A2E" stroke-dasharray="5 4"/><text x="'+((x(last)+vx)/2)+'" y="'+(y+25)+'" font-size="15" font-weight="700" text-anchor="middle" fill="#B03A2E">no fill for '+n+' days</text>';}
+      else s+='<text x="'+(x(last)+12)+'" y="'+(y+25)+'" font-size="15" fill="#87908F">last fill '+fmtD(lastFill)+' · not on his current list</text>';}
+    s+="</g>";});
+  otc.forEach(function(m,i){var y=top+(drugs.length+i)*rh,a=x(start+(end-start)*0.55);
+    var mm=/since\s+(?:about\s+)?([A-Z][a-z]+)/.exec(m.evidence||"");if(mm){var mi=MON.indexOf(mm[1].slice(0,3));if(mi>=0)a=x(Date.UTC(vd.getUTCFullYear(),mi,1));}
+    s+='<text x="'+(L-14)+'" y="'+(y+26)+'" font-size="18" text-anchor="end" fill="#5E4A8C" font-weight="600">'+esc(cap((m.drug||"").split(/\s/)[0]))+'</text><rect x="'+a+'" y="'+(y+10)+'" width="'+(vx-a)+'" height="20" rx="5" fill="#ECE7F5" stroke="#5E4A8C" stroke-dasharray="3 4"/><text x="'+((a+vx)/2)+'" y="'+(y+25)+'" font-size="15" font-weight="600" text-anchor="middle" fill="#5E4A8C">over the counter · not in any pharmacy record</text>';});
+  box.innerHTML=s+'</svg><div class="legend"><span><i style="background:#2A44B0;opacity:.88"></i>days covered by a fill</span><span><i class="late"></i>filled after a record says it was stopped</span><span><b style="color:#B03A2E;font-size:18px">✕</b>stopped in a record</span><span><i style="background:#FBE5DF;border:1px dashed #B03A2E"></i>gap before the visit</span><span><i style="background:#ECE7F5;border:1px dashed #5E4A8C"></i>over the counter</span><span><i class="dot" style="background:#B03A2E;width:10px;height:10px"></i>named in an item to review</span></div>';
+}
+
+/* ---------- audit, checks, inputs, raw ---------- */
 function renderAudit(){
   var a=S.audit;$("auditBox").hidden=!a;var inl=$("auditInline");inl.textContent="";if(!a)return;var box=$("audit");box.textContent="";
   var u=a.unsupported||[],m=a.missing||[];
   var summary=(u.length?u.length+" line"+(u.length===1?" is":"s are")+" not backed up by the source named. ":"Every line matches the source it names. ")+(m.length?m.length+" fact"+(m.length===1?"":"s")+" in the records did not make it into the brief.":"Nothing important was left out.");
   box.appendChild(el("p",(u.length||m.length)?"warnitem":"okitem",summary));
-  var ul=el("ul");ul.style.marginTop="8px";u.forEach(function(x){var li=el("li",null,"Not backed up: "+x.text+(x.problem?" ("+x.problem+") ":" "));(x.cited||[]).forEach(function(c){li.appendChild(chip(c));});ul.appendChild(li);});
+  var ul=el("ul");u.forEach(function(x){var li=el("li",null,"Not backed up: "+x.text+(x.problem?" ("+x.problem+") ":" "));(x.cited||[]).forEach(function(c){li.appendChild(chip(c));});ul.appendChild(li);});
   m.forEach(function(x){withSrc(ul.appendChild(el("li")),"Left out: "+x.text,x.sources);});box.appendChild(ul);
   if(u.length||m.length){$("how").open=true;}
 }
 function renderChecks(){
-  var ul=$("checks");ul.textContent="";var b=S.brief,ps=b.validation_problems;
+  var ul=$("checks");ul.textContent="";var ps=S.brief.validation_problems;
   if(!Array.isArray(ps)){ul.appendChild(el("li","logline","No automatic checks were reported for this brief."));return;}
   if(!ps.length){["Every line says where it comes from.","No more than six items to review, so the list stays short.","Nothing is worded as an order or a diagnosis."].forEach(function(t){ul.appendChild(el("li","okitem","✓ "+t));});return;}
   ps.forEach(function(p){var li=el("li","warnitem");li.appendChild(document.createTextNode(plainProblem(p)+". "));li.appendChild(el("span","code",p));ul.appendChild(li);});
@@ -410,9 +750,9 @@ async function runLive(){
   if(S.running)return;S.running=true;
   var before=S.brief;
   L={t0:Date.now(),lastEvent:Date.now(),timeout:60,ctrl:new AbortController(),finished:false,chars:0,deltas:0,before:before};
-  $("liveBox").hidden=false;$("stream").textContent="";$("liveBox").hidden=false;$("liveMeta").textContent="";banner(null);
+  $("liveBox").hidden=false;$("stream").textContent="";$("liveMeta").textContent="";banner(null);
   $("live").disabled=true;$("live").textContent="Running live…";$("stop").hidden=false;
-  liveStatus("Sending the records to the computer…");$("how").open=true;$("streamWrap").open=true;$("liveBox").scrollIntoView({block:"nearest"});
+  liveStatus("Sending the records to the computer…");$("streamWrap").open=true;$("liveBox").scrollIntoView({block:"nearest"});
   L.tick=setInterval(setTimer,100);setTimer();
   var myL=L;
   try{
@@ -452,32 +792,70 @@ function handleEvent(myL,raw){
 function finishLive(kind,d){
   var myL=L;if(!myL||myL.finished)return;myL.finished=true;clearInterval(myL.tick);setTimer();
   var secs=((Date.now()-myL.t0)/1000).toFixed(1);
-  if(kind==="guard"){try{myL.ctrl.abort();}catch(e){}} // stop reading a stalled stream
-  S.running=false;$("live").disabled=false;$("live").textContent="Run live on the records";$("stop").hidden=true;
+  if(kind==="guard"){try{myL.ctrl.abort();}catch(e){}}
+  S.running=false;$("live").disabled=false;$("live").textContent="▶ Run live on the records";$("stop").hidden=true;
   if(kind==="done"&&d.brief){
     S.brief=d.brief;if(!S.brief.origin)S.brief.origin="live";S.audit=null;
     liveStatus("The brief is ready. It took "+secs+" seconds.");$("streamWrap").open=false;
     banner(null);
-    // any saved audit was for the earlier brief, so drop it until "Check against sources" is pressed again
     render();refreshMeta().then(function(){S.audit=null;render();});return;
   }
-  var fb=d&&d.fallback,shown;
-  if(fb){S.brief=fb;}else{S.brief=myL.before;}
-  shown=S.brief;
+  var fb=d&&d.fallback;
+  S.brief=fb||myL.before;
   var title=kind==="timeout"?"The computer took too long (over "+(myL.timeout)+" seconds), so we stopped waiting":
             kind==="guard"?"The computer went quiet, so we stopped waiting":
             "The computer could not write a new brief";
-  var detail=whatShown(shown)+(d&&d.detail?" Technical detail: "+d.detail:"");
+  var detail=whatShown(S.brief)+(d&&d.detail?" Technical detail: "+d.detail:"");
   liveStatus((kind==="done"?"Finished without a brief":"Stopped")+" after "+secs+" s.");
   banner("bad",title,detail);
   render();refreshMeta().then(render);
 }
 $("stop").onclick=function(){finishLive("guard",{detail:"Stopped by the presenter."});};
-
 $("hideLive").onclick=function(){$("liveBox").hidden=true;};
+
+/* ---------- source drawer ---------- */
+function openDrawer(kicker,title,html){$("dk").textContent=kicker;$("dt").textContent=title;$("dbody").innerHTML=html;$("drawer").classList.add("show");$("drawer").setAttribute("aria-hidden","false");$("scrim").classList.add("show");$("dclose").focus();}
+function closeDrawer(){$("drawer").classList.remove("show");$("drawer").setAttribute("aria-hidden","true");$("scrim").classList.remove("show");document.querySelectorAll(".src.on").forEach(function(c){c.classList.remove("on");});}
+function medId(name){return String(name||"").trim().toLowerCase().replace(/\(.*?\)/g,"").trim().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");}
+async function showSource(raw,btn){
+  document.querySelectorAll(".src.on").forEach(function(c){c.classList.remove("on");});if(btn&&btn.classList.contains("src"))btn.classList.add("on");
+  var m;
+  try{
+    if((m=/^fax p\.?\s*(\d+)/i.exec(raw))){var url="/data/outside_records_fax.pdf#page="+m[1]+"&view=FitH";
+      openDrawer("Outside records · fax","Page "+m[1]+" of the faxed records",'<p class="hint">The page the brief points to. <a href="'+url+'" target="_blank" rel="noopener">Open in a new tab ↗</a></p><iframe title="Fax page '+m[1]+'" src="'+url+'"></iframe>');}
+    else if((m=/^fills?:?\s*([a-z][a-z ]*?)(?:\s+(\d{4}-\d\d-\d\d))?\s*$/i.exec(raw))){var drug=m[1].trim().toLowerCase(),date=m[2],rows=csv(await getText("/data/pharmacy_fills.csv"));
+      openDrawer("Pharmacy history",cap(drug)+(date?", filled "+day(date):": every fill"),
+        '<p class="hint">Highlighted: '+(date?"the fill the brief points to":"every fill of "+esc(drug))+'. '+(date?"Shaded: other fills of the same medicine.":"")+' <a href="/data/pharmacy_fills.csv" target="_blank" rel="noopener">Open the file ↗</a></p><table class="fl"><thead><tr><th>Filled</th><th>Medicine</th><th>Days</th><th>Prescriber</th><th>Pharmacy</th></tr></thead><tbody>'+
+        rows.map(function(r){var same=(r.drug||"").toLowerCase()===drug,hit=same&&(!date||r.fill_date===date);
+          return '<tr class="'+(hit?"hit":same?"soft":"")+'"><td class="d">'+esc(day(r.fill_date))+'</td><td><b>'+esc(r.drug)+'</b> '+esc(r.strength)+'</td><td>'+esc(r.days_supply)+'</td><td>'+esc(r.prescriber)+'</td><td>'+esc(((r.pharmacy||"").match(/\((.*)\)/)||[0,r.pharmacy])[1])+'</td></tr>';}).join("")+"</tbody></table>");
+      var hit=document.querySelector("table.fl tr.hit");if(hit)hit.scrollIntoView({block:"center"});}
+    else if((m=/^intake:?\s*(.*)/i.exec(raw))){var md=await getText("/data/intake_form.md"),want=(m[1]||"").toLowerCase(),words=want.split(/\W+/).filter(function(w){return w.length>3;});
+      var secs=[],cur={h:"",lines:[]};md.split("\n").forEach(function(l){if(/^##\s/.test(l)){secs.push(cur);cur={h:l.replace(/^#+\s*/,""),lines:[]};}else if(!/^#\s/.test(l))cur.lines.push(l);});secs.push(cur);
+      var best=-1,score=0;secs.forEach(function(s,i){var h=s.h.toLowerCase(),sc=want&&h.indexOf(want)>=0?100:words.filter(function(w){return h.indexOf(w)>=0;}).length;if(sc>score){score=sc;best=i;}});
+      var html=secs.map(function(s,i){var body=s.lines.map(function(l){if(!l.trim())return "";
+        if(/^\|/.test(l)){var c=l.split("|").slice(1,-1).map(function(x){return x.trim();});if(c.every(function(x){return /^-*$/.test(x);}))return "";return '<div class="r"><span>'+esc(c[0]).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")+'</span><span>'+esc(c.slice(1).join(" "))+"</span></div>";}
+        return "<p>"+esc(l.replace(/^- /,"• ")).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")+"</p>";}).join("");
+        return '<div class="sect'+(i===best?" hit":"")+'">'+(s.h?"<h4>"+esc(s.h)+"</h4>":"")+body+"</div>";}).join("");
+      openDrawer("Intake form · written by his daughter",m[1]?"“"+cap(m[1])+"”":"Intake form",'<div class="intake">'+html+"</div>");
+      var h=document.querySelector(".intake .sect.hit");if(h)h.scrollIntoView({block:"start"});}
+    else if((m=/^bottle photo:?\s*(.*)/i.exec(raw))){var id=medId(m[1]);
+      openDrawer("Bottle photo · from the patient screen",cap(m[1]),'<p class="hint">The label the brief read. <a href="/patient#staff" target="_blank" rel="noopener">Open the patient\'s answers ↗</a></p><img alt="Bottle photo for '+esc(m[1])+'" src="/data/bottles/'+esc(id)+'.jpg" onerror="this.replaceWith(Object.assign(document.createElement(\'p\'),{className:\'hint\',textContent:\'No sample photo for this medicine. The patient may have uploaded their own: open the patient screen.\'}))">');}
+    else if((m=/^patient:?\s*(.*)/i.exec(raw))){var pj=await (await fetch("/api/patient")).json(),id2=medId(m[1]);
+      var med=(pj.medicines||[]).filter(function(x){return x.id===id2||medId(x.drug)===id2;})[0],ans=med&&(pj.answers||{})[med.id];
+      var words2={taking:"Takes it",not_taking:"Doesn't take it",unsure:"Not sure"};
+      openDrawer("The patient's own answer",cap(m[1]),med?'<div class="intake"><div class="r"><span>Medicine</span><span><b>'+esc(med.drug)+'</b> '+esc(med.dose||"")+'</span></div><div class="r"><span>He says</span><span><b>'+esc(ans?words2[ans.answer]||ans.answer:"No answer yet")+'</b></span></div><div class="r"><span>His note</span><span>'+esc(ans&&ans.note||"—")+'</span></div><div class="r"><span>Pharmacist review</span><span>'+esc((pj.review||{}).status||"pending")+'</span></div></div><p class="hint" style="margin-top:14px"><a href="/patient#staff" target="_blank" rel="noopener">Open the patient screen ↗</a></p>':'<p class="hint">No matching medicine on the patient screen. <a href="/patient#staff">Open it ↗</a></p>');}
+    else openDrawer("Source",raw,'<p class="hint">This source cannot be opened from here.</p>');
+  }catch(e){$("err").textContent=e.message;}
+}
+document.addEventListener("click",function(e){
+  var c=e.target.closest(".src,.pages button");if(c&&c.dataset.src){e.preventDefault();showSource(c.dataset.src,c);return;}
+  var g=e.target.closest(".crow");if(g)showSource("fills: "+g.dataset.drug);});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&$("drawer").classList.contains("show"))closeDrawer();
+  var g=e.target.closest&&e.target.closest(".crow");if(g&&(e.key==="Enter"||e.key===" ")){e.preventDefault();showSource("fills: "+g.dataset.drug);}});
+$("dclose").onclick=closeDrawer;$("scrim").onclick=closeDrawer;
+
 /* ---------- other actions ---------- */
-async function verify(id,status,note){try{S.state=await api("/api/verify",{flag_id:id,status:status,note:note,by:"Pharmacist"});render();}catch(e){}}
-async function decide(id,action,reason){try{S.state=await api("/api/decision",{flag_id:id,action:action,reason:reason,by:"Clara"});delete S.asking[id];delete S.editing[id];render();}catch(e){}}
 $("rolePharm").onclick=function(){S.role="pharmacist";render();};
 $("rolePhys").onclick=function(){S.role="physician";render();};
 $("hasPharm").onchange=function(e){S.hasPharm=e.target.checked;if(!S.hasPharm)S.role="physician";render();};
